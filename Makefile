@@ -4,7 +4,7 @@ PY ?= python3
 
 all: figures
 
-figures: model time scale
+figures: model time scale rigor
 
 model:
 	$(PY) src/model.py > /dev/null
@@ -14,6 +14,10 @@ time:
 
 scale:
 	$(PY) src/figure_scale.py > /dev/null
+
+rigor:
+	$(PY) src/rigor.py > /dev/null
+	$(PY) src/figure_rigor.py > /dev/null
 
 # figures/ and results/ are committed deliverables; clean only removes caches.
 clean:

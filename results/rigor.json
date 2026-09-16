@@ -1,0 +1,413 @@
+{
+  "P1_P2_timescales": {
+    "rates": {
+      "sigma_damage": 0.0403,
+      "sigma_repair": 0.0,
+      "comp_damage": 0.0474,
+      "comp_repair": 0.0796,
+      "tau_learn": 0.002
+    },
+    "sigma_half_life_gen": 17.2,
+    "sigma_half_life_VAR_gen_withdrawn": 8.6,
+    "sigma_convergent_at_eta0": false,
+    "comp_convergent_at_defaults": true,
+    "comp_convergence_condition": "lam > rho(1-2e) = 0.0348",
+    "withdrawn": "the earlier R = t_repair/t_damage = 1.74 compared a sigma half-life (variance, factor 2) against a mean waiting time 1/lam, AND attributed sigma-repair to lambda. Both wrong; see channel_rates."
+  },
+  "P3_lambda_does_not_repair_sigma": [
+    {
+      "lam": 0.0,
+      "sigma_terminal": 0.005,
+      "comp_terminal": 0.0
+    },
+    {
+      "lam": 0.067,
+      "sigma_terminal": 0.005,
+      "comp_terminal": 0.5475
+    },
+    {
+      "lam": 0.3,
+      "sigma_terminal": 0.005,
+      "comp_terminal": 0.8773
+    }
+  ],
+  "P3_sigma_equilibrium_vs_eta": [
+    {
+      "eta": 0.0,
+      "sigma_star": 0.0
+    },
+    {
+      "eta": 0.01,
+      "sigma_star": 0.202
+    },
+    {
+      "eta": 0.02,
+      "sigma_star": 0.3361
+    },
+    {
+      "eta": 0.04,
+      "sigma_star": 0.5031
+    },
+    {
+      "eta": 0.08,
+      "sigma_star": 0.6695
+    }
+  ],
+  "P5_F_variants": {
+    "F_fresh_q09": 0.4519,
+    "F_atrophied_q09_comp0": 0.1215,
+    "F_atrophied_q09_comp1": 0.4519,
+    "note": "model.F(q) is the FRESH-meat (comp=1) static approximation; the time-resolved verifying share is what M.run/M.run_endogenous produce."
+  },
+  "P6_fixed_point_2d": [
+    {
+      "q_ext": 0.05,
+      "lam": 0.0,
+      "fp": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "q_ext": 0.05,
+      "lam": 0.067,
+      "fp": [
+        0.0,
+        0.5448
+      ]
+    },
+    {
+      "q_ext": 0.05,
+      "lam": 0.3,
+      "fp": [
+        0.0,
+        0.87719
+      ]
+    },
+    {
+      "q_ext": 0.3,
+      "lam": 0.0,
+      "fp": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "q_ext": 0.3,
+      "lam": 0.067,
+      "fp": [
+        0.0,
+        0.5448
+      ]
+    },
+    {
+      "q_ext": 0.3,
+      "lam": 0.3,
+      "fp": [
+        0.05733,
+        0.88423
+      ]
+    },
+    {
+      "q_ext": 0.6,
+      "lam": 0.0,
+      "fp": [
+        0.05104,
+        0.05104
+      ]
+    },
+    {
+      "q_ext": 0.6,
+      "lam": 0.067,
+      "fp": [
+        0.2555,
+        0.66111
+      ]
+    },
+    {
+      "q_ext": 0.6,
+      "lam": 0.3,
+      "fp": [
+        0.47051,
+        0.93498
+      ]
+    },
+    {
+      "q_ext": 0.9,
+      "lam": 0.0,
+      "fp": [
+        0.18681,
+        0.18681
+      ]
+    },
+    {
+      "q_ext": 0.9,
+      "lam": 0.067,
+      "fp": [
+        0.34109,
+        0.70007
+      ]
+    },
+    {
+      "q_ext": 0.9,
+      "lam": 0.3,
+      "fp": [
+        0.47051,
+        0.93498
+      ]
+    }
+  ],
+  "P7_w_opt_mmse": [
+    {
+      "e": 0.0,
+      "w_opt": 0.0,
+      "var_a": 0.12502499999999997,
+      "var_M": 0.12252499999999998,
+      "cov": 0.12252499999999998
+    },
+    {
+      "e": 0.21,
+      "w_opt": 1.0,
+      "var_a": 0.0807318525,
+      "var_M": 0.12252499999999998,
+      "cov": 0.09679474999999998
+    },
+    {
+      "e": 0.5,
+      "w_opt": 1.0,
+      "var_a": 0.043131249999999996,
+      "var_M": 0.12252499999999998,
+      "cov": 0.06126249999999999
+    },
+    {
+      "e": 1.0,
+      "w_opt": 0.7424632631419482,
+      "var_a": 0.04250000000000001,
+      "var_M": 0.12252499999999998,
+      "cov": 0.0
+    }
+  ],
+  "P8_mi_trio": {
+    "I_e_fluency": 0.00012,
+    "I_e_a_exante": 0.02174,
+    "I_e_a_given_theta": 0.73424,
+    "note": "ex-ante the recipient's usable statistic is fluency (I~0); the information about e is in a only once theta is known (ex-post)."
+  },
+  "P9_utility": {
+    "RegimeI_e0_sigma_floor": {
+      "U": -3.0284,
+      "acc": 0.2793,
+      "div": 5.2983,
+      "lat": 1.0
+    },
+    "RegimeI_e0_sigma05": {
+      "U": -0.9335,
+      "acc": 0.487,
+      "div": 0.6931,
+      "lat": 1.0
+    },
+    "verified_e05_sigma05": {
+      "U": -0.9698,
+      "acc": 0.3233,
+      "div": 0.6931,
+      "lat": 3.0
+    },
+    "verified_e05_sigma_floor": {
+      "U": -3.1686,
+      "acc": 0.2194,
+      "div": 5.2983,
+      "lat": 3.0
+    }
+  },
+  "P10_dunbar_sensitivity": {
+    "q_profile_x0.5": [
+      {
+        "layer": "support",
+        "q": 0.4,
+        "e_bar": 0.115,
+        "gap": 0.757
+      },
+      {
+        "layer": "sympathy",
+        "q": 0.25,
+        "e_bar": 0.014,
+        "gap": 0.942
+      },
+      {
+        "layer": "affinity",
+        "q": 0.125,
+        "e_bar": 0.0,
+        "gap": 0.97
+      },
+      {
+        "layer": "Dunbar",
+        "q": 0.05,
+        "e_bar": 0.0,
+        "gap": 0.97
+      },
+      {
+        "layer": "beyond",
+        "q": 0.025,
+        "e_bar": 0.0,
+        "gap": 0.97
+      }
+    ],
+    "q_profile_x1.0": [
+      {
+        "layer": "support",
+        "q": 0.8,
+        "e_bar": 0.385,
+        "gap": 0.397
+      },
+      {
+        "layer": "sympathy",
+        "q": 0.5,
+        "e_bar": 0.183,
+        "gap": 0.649
+      },
+      {
+        "layer": "affinity",
+        "q": 0.25,
+        "e_bar": 0.014,
+        "gap": 0.942
+      },
+      {
+        "layer": "Dunbar",
+        "q": 0.1,
+        "e_bar": 0.0,
+        "gap": 0.97
+      },
+      {
+        "layer": "beyond",
+        "q": 0.05,
+        "e_bar": 0.0,
+        "gap": 0.97
+      }
+    ],
+    "q_profile_x2.0": [
+      {
+        "layer": "support",
+        "q": 1.0,
+        "e_bar": 0.519,
+        "gap": 0.29
+      },
+      {
+        "layer": "sympathy",
+        "q": 1.0,
+        "e_bar": 0.519,
+        "gap": 0.29
+      },
+      {
+        "layer": "affinity",
+        "q": 0.5,
+        "e_bar": 0.183,
+        "gap": 0.649
+      },
+      {
+        "layer": "Dunbar",
+        "q": 0.2,
+        "e_bar": 0.0,
+        "gap": 0.97
+      },
+      {
+        "layer": "beyond",
+        "q": 0.1,
+        "e_bar": 0.0,
+        "gap": 0.97
+      }
+    ]
+  },
+  "P12_multiseed_e_bar_q05": {
+    "mean": 0.0,
+    "ci95": 0.0,
+    "n": 24,
+    "min": 0.0,
+    "max": 0.0
+  },
+  "P12_multiseed_gap_q05": {
+    "mean": 0.8307,
+    "ci95": 0.0004,
+    "n": 24,
+    "min": 0.8291,
+    "max": 0.8326
+  },
+  "P12_parameter_sweep": {
+    "kappa": [
+      {
+        "kappa": 0.01,
+        "sigma": 0.0232
+      },
+      {
+        "kappa": 0.02,
+        "sigma": 0.005
+      },
+      {
+        "kappa": 0.05,
+        "sigma": 0.005
+      },
+      {
+        "kappa": 0.1,
+        "sigma": 0.005
+      }
+    ],
+    "lambda": [
+      {
+        "lam": 0.0,
+        "comp": 0.0,
+        "sigma": 0.005
+      },
+      {
+        "lam": 0.03,
+        "comp": 0.3446,
+        "sigma": 0.005
+      },
+      {
+        "lam": 0.067,
+        "comp": 0.5475,
+        "sigma": 0.005
+      },
+      {
+        "lam": 0.15,
+        "comp": 0.745,
+        "sigma": 0.005
+      },
+      {
+        "lam": 0.3,
+        "comp": 0.8773,
+        "sigma": 0.005
+      }
+    ],
+    "q_ext": [
+      {
+        "q_ext": 0.0,
+        "e_bar": 0.0,
+        "gap": 0.9704
+      },
+      {
+        "q_ext": 0.05,
+        "e_bar": 0.0,
+        "gap": 0.7652
+      },
+      {
+        "q_ext": 0.2,
+        "e_bar": 0.0,
+        "gap": 0.1525
+      },
+      {
+        "q_ext": 0.4,
+        "e_bar": 0.3402,
+        "gap": -0.0378
+      },
+      {
+        "q_ext": 0.6,
+        "e_bar": 0.5192,
+        "gap": 0.6207
+      },
+      {
+        "q_ext": 0.9,
+        "e_bar": 0.5192,
+        "gap": 0.6207
+      }
+    ]
+  }
+}

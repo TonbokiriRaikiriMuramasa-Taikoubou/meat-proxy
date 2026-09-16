@@ -7,7 +7,7 @@
 そのまま `e*=0` の吸収状態として現れ、破綻は単一の閾値ではなく
 **損傷 / 修復 / 学習の三つの時定数の大小関係**として決まります。
 
-詳細な導出と解釈は [`docs/ANALYSIS.md`](docs/ANALYSIS.md) にあります。
+詳細な導出と解釈は [`docs/ANALYSIS.md`](docs/ANALYSIS.md)、査読12点への対応と撤回記録は [`docs/ADDENDUM.md`](docs/ADDENDUM.md) にあります。
 
 ---
 
@@ -17,12 +17,14 @@
 |---|---|---|
 | 1 | 肉の情報的付加価値（直接モデルに聞く系との差分） | `ΔE\|err\| = 0.0002`（= 0、遅延のみ付加） |
 | 2 | 検証努力 `e*=0` は吸収状態（ヒステリシス比） | 同一監査 `q=0.98` で萎縮肉 0.153 vs 新品 0.512（**3.35×**） |
-| 3 | 三時定数：損傷 / 修復 / 学習（世代） | **8.6 / 14.9 / 500** → `R = 1.74 > 1`（修復が追いつかない） |
+| 3 | チャネル別レート(/世代) σ損傷/σ修復/comp損傷/comp修復/τ学習 | **0.040 / 0(外生のみ) / 0.047 / 0.080 / 0.002** → σは内因修復なし・compは収束・τが最遅 |
 | 4 | 内部是正の不可能性（相互監査の臨界） | `β_crit = 1.49 > 1`（物理上限 1）→ 内側に tipping point なし |
 | 5 | 重みの誤配（体制I, `q_ext=0.05`） | `w_opt ≈ -0.02` vs `w_act ≈ 0.95` → `gap ≈ 0.65–0.97` が恒久固定 |
 | 6 | 署名の効力範囲（ダンバー地平） | 地平内 `gap=0.40` → 地平外 `gap=0.97`（外側は構造としてミートプロキシ） |
 | 7 | 選択のコイン（1 bit）が運べる痕跡の割合 | `k=6` で **11%**（89% は削ぎ落としで棄損。無損失で残るのは「選んだ事実 = `e`」） |
-| 8 | 世代収束の条件 | `λ > λ* = 0.116` でのみ（現在 `λ=0.067`, `R=1.74` で発散側） |
+| 8 | 世代収束の条件 | comp: `λ > ρ(1−2e)=0.035`（現在 0.067 で収束）。σ: `η > κ(1−e)=0.040` が必要（λは無効） |
+| 9 | `I(e;a｜fluency)` を実測 | **0.0001 bit**（事前 `I(e;a)=0.022`／事後 `I(e;a｜θ)=0.734`） |
+| 10 | `w_opt` を MMSE+共分散から導出 | `e=0` で **ちょうど 0**（中継答は直接照会に厳密に劣る） |
 
 ---
 
@@ -33,6 +35,11 @@
 
 ### スケール軸 — 署名の効力範囲・選択のコイン・世代収束
 ![scale axis](figures/fig_scale_axis.png)
+
+### 補正軸 — 同一尺度のレート・λ↛σの実証・2D不動点・MMSE重み・実測MI・多様性を損失とする効用
+![rigor](figures/fig_rigor.png)
+
+> **選択のコイン（S2）の rate-distortion 部分は比喩的応用です**（点11）。痕跡は厳密にはガウス源ではなく、1bit コインは概念的なものです。
 
 ---
 
@@ -59,14 +66,20 @@ make figures      # = python3 src/model.py && python3 src/figure_time.py && pyth
 ├── src/
 │   ├── model.py               ← 力学系本体（個体群・内生監査・不動点）
 │   ├── figure_time.py         ← 時間軸の集計と6面図
-│   └── figure_scale.py        ← スケール軸の集計と3面図
+│   ├── figure_scale.py        ← スケール軸の集計と3面図
+│   └── rigor.py               ← 科学的完成度レイヤ(補正・MI・MMSE・感度・multiseed)
 ├── figures/
 │   ├── fig_time_axis.png
-│   └── fig_scale_axis.png
+│   ├── fig_scale_axis.png
+│   └── fig_rigor.png
 ├── results/
 │   ├── sim_raw.json           ←  raw 軌道
 │   ├── summary_time.json      ← 時間軸の集計
-│   └── summary_scale.json     ← スケール軸の集計
+│   ├── summary_scale.json     ← スケール軸の集計
+│   └── rigor.json             ← 補正解析の集計
+├── tests/
+│   └── test_rigor.py          ← 12不変テスト (pytest)
+├── .github/workflows/ci.yml   ← CI (py3.11/3.12, pytest + 図再生成)
 ├── Makefile
 ├── requirements.txt
 └── LICENSE

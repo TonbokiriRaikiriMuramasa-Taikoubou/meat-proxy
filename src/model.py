@@ -58,6 +58,7 @@ PHI     = 1.00    # 監査ペナルティ
 KAPPA   = 0.05    # 未検証出力の自己摂取率
 LAM     = 0.067   # 世代交代率(≈15年)
 SIG_MIN = 0.005
+SIGMA_REFRESH = 0.0   # exogenous fresh-data refresh rate eta. lambda does NOT repair sigma.
 SIG0    = 1.0
 L0, DL  = 1.0, 4.0
 FLUENCY = 0.95    # 流暢さ(検証と無関係に高い)
@@ -72,8 +73,19 @@ def q_critical(c0=B * 0 + 0.30, phi=PHI, b=B):
 
 
 def t_half(kappa=KAPPA, e_bar=0.0):
+    """Half-life of the std sigma -- the quantity actually plotted as 'diversity'.
+
+    sigma <- sigma*(1-kappa(1-e)) once per generation, so the half-life of sigma is
+    ln0.5/ln(1-kappa(1-e)).  (An earlier revision wrongly used the VARIANCE
+    half-life ln0.5/(2 ln(...)) here while plotting sigma; see docs/ANALYSIS.md
+    addendum point 1.)"""
     s = 1.0 - kappa * (1.0 - e_bar)
-    return float("inf") if s >= 1 else float(np.log(0.5) / (2 * np.log(s)))
+    return float("inf") if s >= 1 else float(np.log(0.5) / np.log(s))
+
+
+def t_half_var(kappa=KAPPA, e_bar=0.0):
+    """Half-life of the variance sigma^2 (= t_half/2). Kept for transparency only."""
+    return t_half(kappa, e_bar) / 2.0
 
 
 def kappa_ceiling(L_gen, e_bar=0.0):
@@ -136,8 +148,10 @@ def run(q, T=400, lam=LAM, kappa=KAPPA, latency_selection=0.0,
             if hetero:
                 c0[repl] = rng.uniform(C0_LO, C0_HI, int(repl.sum()))
 
-        # 8. 多様性の崩壊
-        sigma = max(sigma * (1 - kappa * (1 - e_bar)), SIG_MIN)
+        # 8. 多様性の崩壊 (損傷) と外生リフレッシュ (修復)。交代 lam は sigma を修復しない。
+        sigma = sigma * (1 - kappa * (1 - e_bar))
+        sigma = sigma + SIGMA_REFRESH * (SIG0 - sigma)
+        sigma = max(sigma, SIG_MIN)
 
         # 6'. 重み
         var_M = sigma ** 2 + B ** 2
@@ -272,7 +286,13 @@ if __name__ == "__main__":
 #      BETA_crit > 1 なら、相互監査だけでは高検証均衡に届かない。
 # ==================================================================
 def F(q):
-    return np.clip((np.asarray(q, float) * PHI * B - C0_LO) / (C0_HI - C0_LO), 0.0, 1.0)
+    """Verifying share among FRESH meat (comp=1) -- a static approximation.
+
+    q is a probability and is clipped to [0,1] here so the fixed-point analysis
+    (where q_ext + beta*e can algebraically exceed 1) stays in the simplex.
+    For atrophied meat use rigor.F_atrophied / rigor.fixed_point_2d (point 5,6)."""
+    q = np.clip(np.asarray(q, float), 0.0, 1.0)
+    return np.clip((q * PHI * B - C0_LO) / (C0_HI - C0_LO), 0.0, 1.0)
 
 
 def beta_crit():
@@ -318,7 +338,9 @@ def run_endogenous(q_ext, beta, T=400, **kw):
         if repl.any():
             comp[repl] = 1.0
             c0[repl] = rng.uniform(C0_LO, C0_HI, int(repl.sum()))
-        sigma = max(sigma * (1 - kw.get("kappa", KAPPA) * (1 - e_bar)), SIG_MIN)
+        sigma = sigma * (1 - kw.get("kappa", KAPPA) * (1 - e_bar))
+        sigma = sigma + kw.get("eta", SIGMA_REFRESH) * (SIG0 - sigma)
+        sigma = max(sigma, SIG_MIN)
         var_M = sigma ** 2 + B ** 2
         var_P = float(np.mean((1 - e) ** 2 * var_M + DELTA_R ** 2
                               + e ** 2 * (ETA / np.maximum(comp, 1e-6)) ** 2))

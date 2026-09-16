@@ -66,10 +66,16 @@
     "lossless_part": "the binary fact that a signer chose = e"
   },
   "S3_generational": {
-    "t_half": 8.6,
-    "lam_star": 0.1163,
-    "R_at_current_lambda": 1.736,
-    "R_at_lambda_015": 0.775,
-    "verdict": "comp チャネルは常に交代で回復するが、σ チャネルは λ>λ* でのみ収束"
+    "comp_channel": {
+      "convergence_condition": "lambda > rho(1-2e) = 0.0348",
+      "convergent_at_defaults": true
+    },
+    "sigma_channel": {
+      "damage_rate": 0.0403,
+      "repair_rate_exogenous": 0.0,
+      "convergent_at_eta0": false,
+      "note": "lambda does NOT repair sigma; only exogenous fresh data (eta) does"
+    },
+    "withdrawn": "the earlier R=(1/lambda)/t_half and lambda*=1/t_half mixed timescales and mis-attributed sigma-repair to lambda (review pts 1,2,3)"
   }
 }
