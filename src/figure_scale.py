@@ -1,40 +1,43 @@
 """
-スケール軸の演算  v1
-======================
-第一の図(meatproxy.png)が「時間軸」だったのに対し、こちらは「スケール軸」。
+The scale axis, v1
+==================
+Where fig_time_axis.png was the TIME axis, this is the SCALE axis.
 
-問いは三つ。
-  S1  署名/痕跡はどの社会的距離まで効力を持つか  → ダンバー層
-  S2  多次の痕跡が「選択のコイン」(1 bit) に削ぎ落とされるとき、何が残るか
-  S3  個人スケールの衝突は、世代スケールで本当に収束するか
+Three questions.
+  S1  Up to what social distance does a signature / trace retain force?
+      -> Dunbar layers
+  S2  When a many-dimensional trace is shaved down to the "coin of choice"
+      (1 bit), what survives?
+  S3  Does individual-scale collision really converge at generational scale?
 
-S1 ダンバー地平
-   監査 q は社会的距離の関数。反复ゲームと評判が安い内側ほど q は高い。
-     layer 5   (support)   q≈0.80
-     layer 15  (sympathy)  q≈0.50
-     layer 50  (affinity)  q≈0.25
-     layer 150 (Dunbar)    q≈0.10
-     beyond    (strangers) q≈q_ext=0.05
-   e_bar(d)=F(q(d))、gap(d)=w_act-w_opt を層ごとに出す。
-   → 痕跡/署名の効力はダンバー地平の内側だけで立ち、外側では構造的に
-     ミートプロキシ体制(体制I)になる。選択ではなく構造。
+S1 Dunbar horizon
+   Audit q is a function of social distance: repeated games and cheap
+   reputation make q high on the inside.
+     layer 5   (support)   q~0.80
+     layer 15  (sympathy)  q~0.50
+     layer 50  (affinity)  q~0.25
+     layer 150 (Dunbar)    q~0.10
+     beyond    (strangers) q~q_ext=0.05
+   Report e_bar(d)=F(q(d)) and gap(d)=w_act-w_opt per layer.
+   -> The force of a trace/signature stands only inside the Dunbar horizon;
+      outside it the meat-proxy regime (Regime I) holds by structure, not choice.
 
-S2 選択のコイン (rate-distortion)
-   痕跡 T は k 次元(形式・スケール・媒体・意図・持続・受手…)。
-   各次元を歪率 D/σ²=0.125 で符号化するには R_dim = 0.5*log2(1/0.125) = 1.5 bit。
-   よって H(T) = 1.5k bit。コインは 1 bit。
-   コインが運べる痕跡の割合 = 1 / H(T) = 1/(1.5k)。
-   → k=6 で ≈11%。89% は削ぎ落としで棄損する。
-   しかしコインが*無損失で*運ぶものが一つだけある:
-   「署名者が選択をした」という二値の事実 = e そのもの。
-   コイン = e を公開したもの。
+S2 The coin of choice (rate-distortion)
+   The trace T is k-dimensional (form, scale, medium, intent, duration,
+   audience...). Coding each dimension at distortion D/sigma^2 = 0.125 costs
+   R_dim = 0.5*log2(1/0.125) = 1.5 bit, so H(T) = 1.5k bit. The coin is 1 bit.
+   Fraction of the trace the coin can carry = 1/H(T) = 1/(1.5k).
+   -> At k=6 that is ~11%; 89% is discarded by the shave.
+   Yet exactly one thing travels losslessly: the binary fact that a signer
+   chose = e itself.  The coin = e made public.
 
-S3 世代収束の条件
-   R = t_repair / t_damage = (1/λ) / t_half。
-   R<1 ⇔ λ > λ* = 1/t_half のときだけ、世代スケールは収束する。
-   現在 λ=0.067 → R=1.74 (発散側)。λ=0.15 → R=0.78 (収束側)。
-   → 「世代的には収束を得る」は能力(comp)チャネルでは真、
-     多様性(σ)チャネルでは λ>λ* の条件下でのみ真。無条件ではない。
+S3 Condition for generational convergence
+   R = t_repair / t_damage = (1/lambda)/t_half.
+   R<1, i.e. generational convergence, holds only when lambda > lambda*=1/t_half.
+   Now lambda=0.067 -> R=1.74 (divergent side); lambda=0.15 -> R=0.78 (convergent).
+   -> "Generationally it converges" is true for the competence (comp) channel,
+      and true for the diversity (sigma) channel only under lambda>lambda*.
+      It is not unconditional.
 """
 import json
 import sys
@@ -55,7 +58,7 @@ C = dict(red="#ff5f6d", cyan="#37d0c4", amber="#ffc46b",
 
 OUT = {}
 
-# ---------------------------------------------------------------- S1 ダンバー
+# ---------------------------------------------------------------- S1 Dunbar
 LAYERS = [("5\nsupport", 5, 0.80), ("15\nsympathy", 15, 0.50),
           ("50\naffinity", 50, 0.25), ("150\nDunbar", 150, 0.10),
           ("beyond\nstrangers", 1500, 0.05)]
@@ -71,7 +74,7 @@ for name, n, q in LAYERS:
                    gap=round(w_act - w_opt, 3)))
 OUT["S1_dunbar"] = s1
 
-# ---------------------------------------------------------------- S2 コイン
+# ---------------------------------------------------------------- S2 the coin
 R_DIM = 0.5 * np.log2(1 / 0.125)          # 1.5 bit / dim
 ks = np.arange(1, 13)
 retained = 1.0 / (ks * R_DIM)
@@ -80,7 +83,7 @@ OUT["S2_coin"] = dict(R_dim_bit=round(float(R_DIM), 3),
                       curve={int(k): round(float(1 / (k * R_DIM)), 4) for k in ks},
                       lossless_part="the binary fact that a signer chose = e")
 
-# ---------------------------------------------------------------- S3 世代収束
+# ---------------------------------------------------------------- S3 generational convergence
 lams = np.linspace(0.01, 0.40, 200)
 t_half = sim.t_half(sim.KAPPA, 0.21)
 R_curve = (1 / lams) / t_half
@@ -89,9 +92,9 @@ OUT["S3_generational"] = dict(
     t_half=round(t_half, 2), lam_star=round(lam_star, 4),
     R_at_current_lambda=round((1 / sim.LAM) / t_half, 3),
     R_at_lambda_015=round((1 / 0.15) / t_half, 3),
-    verdict="comp チャネルは常に交代で回復するが、σ チャネルは λ>λ* でのみ収束")
+    verdict="the competence channel always recovers via turnover; sigma converges only for lambda>lambda*")
 
-# ================================================================= 図
+# ================================================================= figures
 fig, ax = plt.subplots(1, 3, figsize=(16.5, 5.4))
 fig.patch.set_facecolor("#0f1117")
 for a in ax.ravel():
@@ -104,7 +107,7 @@ for a in ax.ravel():
     a.xaxis.label.set_color("#a8b3cc"); a.yaxis.label.set_color("#a8b3cc")
     a.xaxis.label.set_fontsize(9); a.yaxis.label.set_fontsize(9)
 
-# (1) ダンバー地平
+# (1) Dunbar horizon
 a = ax[0]
 xs = np.arange(len(s1))
 e_bars = a.bar(xs - 0.19, [d["e_bar"] for d in s1], width=0.36,
@@ -124,7 +127,7 @@ for x, d in zip(xs, s1):
     a.text(x - 0.19, d["e_bar"] + 0.02, f'{d["e_bar"]:.2f}', ha="center",
            color="#eef2fb", fontsize=7.5)
 
-# (2) 選択のコイン
+# (2) the coin of choice
 a = ax[1]
 a.plot(ks, retained, color=C["violet"], lw=2.6, marker="o", ms=4,
        label="fraction of trace the 1-bit coin can carry")
@@ -146,7 +149,7 @@ a.set_title("(2) The coin of choice: 1 bit vs H(T)=1.5k bits\nWhat survives is n
 a.legend(fontsize=8, loc="upper right", facecolor="#1b2130",
          edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (3) 世代収束
+# (3) generational convergence
 a = ax[2]
 a.plot(lams, R_curve, color=C["blue"], lw=2.6)
 a.axhline(1, color=C["grey"], lw=1.4, ls=":")

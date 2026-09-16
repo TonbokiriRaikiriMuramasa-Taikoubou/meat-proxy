@@ -3,27 +3,27 @@
     {
       "c0": 0.08,
       "q_c": 0.229,
-      "verdict": "検証する"
+      "verdict": "verifies"
     },
     {
       "c0": 0.15,
       "q_c": 0.429,
-      "verdict": "検証する"
+      "verdict": "verifies"
     },
     {
       "c0": 0.3,
       "q_c": 0.857,
-      "verdict": "検証する"
+      "verdict": "verifies"
     },
     {
       "c0": 0.45,
       "q_c": 1.286,
-      "verdict": "検証しない"
+      "verdict": "does not verify"
     },
     {
       "c0": 0.6,
       "q_c": 1.714,
-      "verdict": "検証しない"
+      "verdict": "does not verify"
     }
   ],
   "P1_share_verifying_vs_q": [
@@ -1558,7 +1558,7 @@
     "share_still_verifying": 0.153,
     "e_bar_atrophied_at_q098": 0.153,
     "e_bar_fresh_at_q098": 0.5123,
-    "verdict": "同じ q でも、萎縮した肉は検証できない。e*=0 は吸収状態"
+    "verdict": "at the same q, atrophied meat cannot verify; e*=0 is an absorbing state"
   },
   "P5_attribution_loss": {
     "e_bar=0.0": {
@@ -1577,7 +1577,7 @@
       "loss": 0.0199
     }
   },
-  "P5_note": "判別チャネルは遅延 L だけ。L は社会が最適化して消す対象なので、系は自分の唯一の診断器を自ら破壊する。",
+  "P5_note": "The only discriminating channel is latency L; since L is what society optimises away, the system destroys its own only diagnostic.",
   "timescales": {
     "t_damage_half_gen": 8.6,
     "t_repair_gen": 14.93,
@@ -1589,6 +1589,6 @@
       "0.1": 250.0,
       "0.55": 45.5
     },
-    "verdict": "R>1: 損傷のほうが修復より速い。寿命は破綻を防がない、遅らせるだけ。"
+    "verdict": "R>1: damage outruns repair; lifespan delays collapse, it does not prevent it."
   }
 }

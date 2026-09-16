@@ -1,37 +1,43 @@
-# meat-proxy
+# meat-proxy (EN)
 
-**ミートプロキシ（= AI の出力を検証せず中継する人間）を、吸収状態を持つ力学系として建模し、
-その破綻点・重み・署名の効力範囲を演算で出すリポジトリ。**
+**Modelling the meat proxy — the human who relays AI output without verifying it —
+as a dynamical system with an absorbing state, and computing where it breaks,
+what its weights are, and over what range a signature retains force.**
 
-思考実験ではなく力学系として扱います。語の自己矛盾（「検証しない検証者」）が
-そのまま `e*=0` の吸収状態として現れ、破綻は単一の閾値ではなく
-**損傷 / 修復 / 学習の三つの時定数の大小関係**として決まります。
+This is the English companion of the Japanese repository. The code, figures and
+numerical results are **identical** (verified: all numerics in `results/*.json`
+match the JA repo bit-for-bit; only human-readable verdict strings are translated).
+The full derivation lives in [`docs/ANALYSIS.md`](docs/ANALYSIS.md).
 
-詳細な導出と解釈は [`docs/ANALYSIS.md`](docs/ANALYSIS.md) にあります。
+> **On term-values.** Translating a coinage forces choices about what each word is
+> worth in the target language. The choices made here are listed openly in
+> [`docs/ANALYSIS.md` §0.0](docs/ANALYSIS.md) — a glossary of term-values. Where the
+> slang is blunt ("meat"), it is kept blunt; where a neutral register serves the
+> argument, "the proxy" / "the relay" is used instead.
 
 ---
 
 ## Headline results
 
-| # | 結果 | 値 |
+| # | Result | Value |
 |---|---|---|
-| 1 | 肉の情報的付加価値（直接モデルに聞く系との差分） | `ΔE\|err\| = 0.0002`（= 0、遅延のみ付加） |
-| 2 | 検証努力 `e*=0` は吸収状態（ヒステリシス比） | 同一監査 `q=0.98` で萎縮肉 0.153 vs 新品 0.512（**3.35×**） |
-| 3 | 三時定数：損傷 / 修復 / 学習（世代） | **8.6 / 14.9 / 500** → `R = 1.74 > 1`（修復が追いつかない） |
-| 4 | 内部是正の不可能性（相互監査の臨界） | `β_crit = 1.49 > 1`（物理上限 1）→ 内側に tipping point なし |
-| 5 | 重みの誤配（体制I, `q_ext=0.05`） | `w_opt ≈ -0.02` vs `w_act ≈ 0.95` → `gap ≈ 0.65–0.97` が恒久固定 |
-| 6 | 署名の効力範囲（ダンバー地平） | 地平内 `gap=0.40` → 地平外 `gap=0.97`（外側は構造としてミートプロキシ） |
-| 7 | 選択のコイン（1 bit）が運べる痕跡の割合 | `k=6` で **11%**（89% は削ぎ落としで棄損。無損失で残るのは「選んだ事実 = `e`」） |
-| 8 | 世代収束の条件 | `λ > λ* = 0.116` でのみ（現在 `λ=0.067`, `R=1.74` で発散側） |
+| 1 | Informational value of the meat (vs. asking the model directly) | `ΔE\|err\| = 0.0002` (= 0; adds latency only) |
+| 2 | `e*=0` is an absorbing state (hysteresis ratio) | at the same audit `q=0.98`: atrophied 0.153 vs fresh 0.512 (**3.35×**) |
+| 3 | Three timescales — damage / repair / learning (generations) | **8.6 / 14.9 / 500** → `R = 1.74 > 1` (repair cannot keep up) |
+| 4 | Impossibility of internal reform (mutual-audit critical point) | `β_crit = 1.49 > 1` (physical max is 1) → no interior tipping point |
+| 5 | Misallocated credence (Regime I, `q_ext=0.05`) | `w_opt ≈ -0.02` vs `w_act ≈ 0.95` → `gap ≈ 0.65–0.97`, frozen |
+| 6 | Range of a signature's force (Dunbar horizon) | inside `gap=0.40` → outside `gap=0.97` (outside = meat-proxy by structure) |
+| 7 | Share of a trace the coin of choice (1 bit) can carry | at `k=6`: **11%** (89% shaved; what survives losslessly is the fact-of-choice = `e`) |
+| 8 | Condition for generational convergence | only for `λ > λ* = 0.116` (now `λ=0.067`, `R=1.74`, divergent side) |
 
 ---
 
 ## Figures
 
-### 時間軸 — 等価性・ブートストラップ・時定数・重み・崩壊・ヒステリシス
+### Time axis — equivalence · bootstrap · timescales · weights · collapse · hysteresis
 ![time axis](figures/fig_time_axis.png)
 
-### スケール軸 — 署名の効力範囲・選択のコイン・世代収束
+### Scale axis — range of a signature · the coin of choice · generational convergence
 ![scale axis](figures/fig_scale_axis.png)
 
 ---
@@ -45,7 +51,7 @@ pip install -r requirements.txt
 make figures      # = python3 src/model.py && python3 src/figure_time.py && python3 src/figure_scale.py
 ```
 
-生成物: `figures/*.png`, `results/*.json`
+Outputs: `figures/*.png`, `results/*.json`
 
 ---
 
@@ -53,20 +59,20 @@ make figures      # = python3 src/model.py && python3 src/figure_time.py && pyth
 
 ```
 .
-├── README.md                  ← このファイル
+├── README.md                  <- this file
 ├── docs/
-│   └── ANALYSIS.md            ← 全文（導出・解釈・付録:スケール軸）
+│   └── ANALYSIS.md            <- full text (derivation, interpretation, appendix: scale axis)
 ├── src/
-│   ├── model.py               ← 力学系本体（個体群・内生監査・不動点）
-│   ├── figure_time.py         ← 時間軸の集計と6面図
-│   └── figure_scale.py        ← スケール軸の集計と3面図
+│   ├── model.py               <- the dynamical system (population, endogenous audit, fixed points)
+│   ├── figure_time.py         <- time-axis aggregation and the 6-panel figure
+│   └── figure_scale.py        <- scale-axis aggregation and the 3-panel figure
 ├── figures/
 │   ├── fig_time_axis.png
 │   └── fig_scale_axis.png
 ├── results/
-│   ├── sim_raw.json           ←  raw 軌道
-│   ├── summary_time.json      ← 時間軸の集計
-│   └── summary_scale.json     ← スケール軸の集計
+│   ├── sim_raw.json           <- raw trajectories
+│   ├── summary_time.json      <- time-axis aggregates
+│   └── summary_scale.json     <- scale-axis aggregates
 ├── Makefile
 ├── requirements.txt
 └── LICENSE
@@ -74,31 +80,32 @@ make figures      # = python3 src/model.py && python3 src/figure_time.py && pyth
 
 ---
 
-## Model in one screen
+## The model in one screen
 
-主体は `M`(モデル) / `P_i`(プロキシ=肉) / `S`(社会)。
+Agents: `M` (model) / `P_i` (proxy = meat) / `S` (society = recipient).
 
 ```
-m   = theta + B + eps                     # モデル出力。B=流暢さと無関係なバイアス
-a   = (1-e)*m + e*theta + nu_r + e*nu_v   # 提示される答え。e=検証努力
-e   = 1{ q*Φ*B > c0*(1+Γ(1-comp)) }       # 検証は bang-bang
-comp← comp + ρ(e-comp)                    # 使わない検証力は萎縮
-sig ← sig*(1-κ(1-e_bar))                  # 未検証出力の自己摂取が多様性を殺す
-q   = q_ext + β*e_bar                     # 監査は内生（=「誰かが読む」= e の別名）
-tau ← tau + DTAU*q*(0.5-bad)*2            # 社会の信頼の学習速度は監査頻度に比例
+m   = theta + B + eps                     # model output; B = bias independent of fluency
+a   = (1-e)*m + e*theta + nu_r + e*nu_v   # the answer presented; e = verification effort
+e   = 1{ q*PHI*B > c0*(1+GAMMA*(1-comp)) }   # verification is bang-bang
+comp<- comp + RHO*(e-comp)                # unused competence atrophies
+sig <- sig*(1-kappa*(1-e_bar))            # self-ingestion of unverified output kills diversity
+q   = q_ext + beta*e_bar                  # audit is endogenous (= "someone reads" = another name for e)
+tau <- tau + DTAU*q*(0.5-bad)*2           # society's trust learns at a rate proportional to audit frequency
 w_opt = 1 - var_P/var_M ;  w_act = tau*fluency ;  gap = w_act - w_opt
 ```
 
-パラメータ表と命題 P1–P7 は [`src/model.py`](src/model.py) の docstring と
-[`docs/ANALYSIS.md`](docs/ANALYSIS.md) を参照。
+Parameter table and propositions P1–P7: see [`src/model.py`](src/model.py) docstring
+and [`docs/ANALYSIS.md`](docs/ANALYSIS.md).
 
 ---
 
 ## Note on scope
 
-数値はすべて**このモデルの既定パラメータ下でのもの**です。実世界の実測値ではなく、
-「もしミートプロキシをこの力学系として読むなら、破綻点はここに出る」という条件付きの主張です。
-パラメータを変えて感度を見ることは意図された使い方の一つです。
+Every number here is **under this model's default parameters**. These are not
+measurements of the world; they are conditional claims: *if* the meat proxy is read
+as this dynamical system, *then* its breaking points fall here. Varying parameters
+to probe sensitivity is an intended use.
 
 ## License
 
