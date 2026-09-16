@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pytest
+      - name: Run invariant tests
+        run: pytest -q tests/
+      - name: Smoke-run the model and the rigor report
+        run: |
+          python src/model.py > /dev/null
+          python src/rigor.py > /dev/null
+      - name: Regenerate figures (headless)
+        run: |
+          python src/figure_time.py > /dev/null
+          python src/figure_scale.py > /dev/null
+          python src/figure_rigor.py > /dev/null

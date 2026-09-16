@@ -1,191 +1,272 @@
-# ミートプロキシの演算的分析
+# Meat Proxy — a computational analysis (EN)
 
-> 思考実験は終わっている、という前提に立ちます。ここでは定義→モデル→数値→解釈の順で、
-> 「重みはどうあるか」「答えはどう出て、提示されるのか隠されるのか」までを演算で出します。
-> 再現: `make figures`（= `python3 src/model.py && python3 src/figure_time.py`）
+> This is not a thought experiment; it is a dynamical system. Definition → model →
+> numbers → interpretation, carried through to "what should the weights be" and
+> "how does the answer emerge, and is it presented or hidden".
+> Reproduce: `make figures` (= `python3 src/model.py && python3 src/figure_time.py`)
 > → `figures/fig_time_axis.png` / `results/summary_time.json`
 
 ---
 
-## 0. 用語の固定
+## 0.0 Translator's note — a glossary of term-values
 
-**ミートプロキシ (meat proxy)** — AI の出力を、読まず・理解せず・検証せず他者に中継する人間。
-Gruhn (2026-08-03) の定義に従い、以下のように形式化します。
+Translating a coinage is an act of pricing: each word must be given a value in the
+target language, and the price chosen changes what survives. The values used here:
 
-- 主体は3つ。 `M` = モデル、 `P` = プロキシ（肉）、 `S` = 社会（受信者）。
-- `theta_t` … 真の最適解
-- `m_t = theta_t + B + eps_t` … モデル出力。`B` は**流暢さと無関係な系統的バイアス**、`eps ~ N(0, sigma_t^2)` は多様性。
-- `e ∈ [0,1]` … プロキシの検証努力。肉の唯一の付加価値。
-- `a_t = (1-e)·m_t + e·theta_t + nu_r + e·nu_v` … **提示される答え**。
-  - `e=0` → `a = m + nu_r`（純中継）
-  - `e=1` → `a = theta + nu_r + nu_v`（完全検証）
-- `q` … 監査（＝誰かが読む）確率。**これは外生パラメータではなく `e` の別名**（§4）。
-- `w_act` … 社会が「人間の署名」に実際に置く重み。 `w_opt` … 置くべき重み（逆分散）。
-
----
-
-## 1. パラドックスの正体
-
-ミートプロキシは語として自己矛盾しています。
-
-1. **プロキシは本来「検証」の器である。** 中継が中継として価値を持つのは、中にあるものが何かを*選別する*からで、選別しない中継は中継ではなく**配管**です。
-2. **しかし肉であることの報酬は「配管であること」から発生する。** 検証の費用 `c_e` は私的・確実・即時、検証の便益 `q·Φ·B` は確率的・遅延・他者に拡散。よって私的インセンティブは常に `e=0` へ向かう。
-3. **しかも `e=0` は観測されない。** 検証された答えと中継された答えは、流暢さの次元で区別がつかない（§6）。
-
-つまりこの語は「**検証しない検証者**」を指しており、定義の中に均衡を持ちません。
-これは比喩ではなく、以下のように*吸収状態*として正確に出ます。
-
----
-
-## 2. モデル（力学）
-
-| # | 式 | 意味 |
+| JA | EN value chosen | why |
 |---|---|---|
-| D1 | `e = 1{ q·Φ·B > c_eff }` | 検証は bang-bang。費用が便益を越えれば一切しない |
-| D2 | `c_eff = c0·(1 + Γ(1-comp))`、`comp ← comp + ρ(e-comp)` | **使わない検証力は萎縮し、検証費用を押し上げる** |
-| D3 | `sigma ← sigma·(1 − κ(1−e))` | 未検証で通過した出力だけが学習データに還り、多様性を殺す |
-| D4 | 確率 `λ` で肉が新品に交代 | 世代交代＝修復の唯一の経路 |
-| D5 | `q_t = q_ext + β·e_bar_{t-1}` | **監査は内生。** 相互監査 `β≤1` と外部監査 `q_ext` |
-| D6 | `tau ← tau + DTAU·q·(0.5−bad)·2` | 社会の信頼 `tau` の学習速度は**監査頻度に比例**する |
-
-`w_opt = 1 − var_P/var_M`（逆分散）、`w_act = tau·fluency`、`gap = w_act − w_opt`。
+| ミートプロキシ | **meat proxy** | the term under study; kept verbatim |
+| 肉 | **meat** (or, in neutral prose, *the proxy / the relay*) | the slang is deliberately blunt; softening it would delete its argument |
+| 検証努力 `e` | **verification effort**, `e` | the proxy's only value-add |
+| 検証能力 `comp` | **competence**, `comp` | the capacity to verify; atrophies with disuse |
+| 監査 `q` | **audit rate**, `q`; `q_ext` external audit; `β` mutual audit | "audit" carries the sense of *someone actually reading* |
+| 吸収状態 | **absorbing state** | standard Markov terminology |
+| 萎縮 | **atrophy** | disuse-decay of competence |
+| 世代交代 `λ` | **generational turnover**, `λ` | the repair channel |
+| 多様性 `σ` / 自己摂取 | **output diversity**, `σ` / **self-ingestion** | the model-collapse channel |
+| 重み `w` | **weight**; `w_act` = *credence extended*, `w_opt` = *credence warranted*; `gap` = *misallocated credence* ("the hidden loss") | "credence" is the epistemic sense of weight |
+| 痕跡 | **trace** | the only observable of `e` |
+| 署名 | **signature** | what the trace constitutes |
+| 選択のコイン | **the coin of choice** | the single token the optimisation leaves |
+| 削ぎ落とし | **the shave** | collapse of a k-dimensional trace to one token |
+| （選択したという）事実 | **fact-of-choice** | the binary content the coin carries losslessly |
+| ダンバー地平 | **the Dunbar horizon** | the social distance beyond which a signature loses force |
+| 損傷 / 修復 / 学習 | **damage / repair / learning** | the three timescales |
+| 体制 I / II / III | **Regime I / II / III** | phase labels |
+| 説明責任 | **accountability** | |
+| 流暢さ | **fluency** | high regardless of verification |
+| 目撃可能 | **witnessable** (auditable) | the normative target: make the weight witnessable |
+| 未決定性 | **underdetermination** | why an answer emerges anyway |
+| 寿命 | **lifespan** | the turnover-bounded repair channel |
 
 ---
 
-## 3. 結果1 — 肉は情報的に空洞である
+## 0. Fixing the terms
 
-`e=0` の系と、**中継そのものを消して直接モデルに聞く系**を 40,000 サンプルで比較しました。
+**Meat proxy** — a human who relays AI output to others without reading, understanding,
+or verifying it (Gruhn, 2026-08-03). Formalised as:
+
+- Agents: `M` = model, `P` = proxy (meat), `S` = society (recipient).
+- `theta_t` … the true optimum.
+- `m_t = theta_t + B + eps_t` … model output. `B` is a **systematic bias independent
+  of fluency**; `eps ~ N(0, sigma_t^2)` is diversity.
+- `e ∈ [0,1]` … the proxy's verification effort; the meat's only value-add.
+- `a_t = (1-e)·m_t + e·theta_t + nu_r + e·nu_v` … **the answer presented**.
+  - `e=0` → `a = m + nu_r` (pure relay)
+  - `e=1` → `a = theta + nu_r + nu_v` (full verification)
+- `q` … audit (= someone reads) rate. **Not an exogenous parameter but another name
+  for `e`** (§4).
+- `w_act` … the weight society actually places on the human signature;
+  `w_opt` … the weight warranted (inverse-variance).
+
+---
+
+## 1. The paradox, stated exactly
+
+The term is self-contradictory.
+
+1. **A proxy is by definition an instrument of verification.** A relay is worth being
+   a relay only because it *selects* what passes; a relay that does not select is not
+   a relay but **plumbing**.
+2. **Yet the reward for being meat accrues from being plumbing.** The cost of
+   verification `c_e` is private, certain, immediate; its benefit `q·Φ·B` is
+   stochastic, delayed, and diffused onto others. Private incentive therefore always
+   points at `e=0`.
+3. **And `e=0` is unobservable.** A verified answer and a relayed answer are
+   indistinguishable along the axis of fluency (§6).
+
+The term therefore denotes a **verifier that does not verify**, and carries no
+equilibrium inside its definition. This is not metaphor: it emerges below as an
+*absorbing state*.
+
+---
+
+## 2. The model (dynamics)
+
+| # | Equation | Meaning |
+|---|---|---|
+| D1 | `e = 1{ q·Φ·B > c_eff }` | verification is bang-bang: if cost exceeds benefit, none at all |
+| D2 | `c_eff = c0·(1 + Γ(1-comp))`, `comp ← comp + ρ(e-comp)` | **unused competence atrophies and inflates verification cost** |
+| D3 | `sigma ← sigma·(1 − κ(1-e))` | only output that passed unverified returns to training data, killing diversity |
+| D4 | with prob `λ` the meat is replaced by a fresh one | generational turnover = the only repair path |
+| D5 | `q_t = q_ext + β·e_bar_{t-1}` | **audit is endogenous**: mutual audit `β≤1` plus external audit `q_ext` |
+| D6 | `tau ← tau + DTAU·q·(0.5−bad)·2` | society's trust `tau` learns at a rate **proportional to audit frequency** |
+
+`w_opt = 1 − var_P/var_M` (inverse-variance), `w_act = tau·fluency`, `gap = w_act − w_opt`.
+
+---
+
+## 3. Result 1 — the meat is informationally void
+
+Comparing the `e=0` system against **deleting the relay and asking the model
+directly**, over 40,000 samples:
 
 ```
 E|err|  direct to model : 0.3500
 E|err|  via meat proxy  : 0.3502
-Δ                    : 0.0002        latency = +L0 (>0)
+delta                   : 0.0002        latency = +L0 (>0)
 ```
 
-**肉の付加価値は 0、差分は遅延とノイズだけ。** Gruhn の "adds nothing but latency" は、この等式そのものです。
-したがってミートプロキシの社会的効用は **負**（遅延＋説明責任の誤帰属）であり、正の項を持ちません。
+**The meat's value-add is 0; the difference is latency and noise only.** Gruhn's
+"adds nothing but latency" is exactly this equation. The meat proxy's social utility
+is therefore **negative** (latency + misattributed accountability) and has no positive
+term.
 
 ---
 
-## 4. 結果2 — 破綻点は「三つの時定数」の大小関係で決まる
+## 4. Result 2 — the breaking point is set by three timescales, not one threshold
 
-ここがご質問の「どの時点で破綻するか」への直接の答えです。破綻は単一の閾値ではなく、
-**損傷・修復・学習の三つの速度の大小関係**で決まります。
+The breaking point is not a single number but the **ordering of three speeds**:
+damage, repair, learning.
 
-| チャネル | 時定数 | 値（世代） |
+| Channel | Timescale | Value (generations) |
 |---|---|---|
-| σ 損傷（自己摂取） | `−ln(1−κ(1−e))` | **0.040** /世代 |
-| σ 修復 | 外生リフレッシュ `η` のみ（**`λ` は σ を修復しない**） | **0**（η=0） |
-| comp 損傷（萎縮） | `ρ(1−e)` | **0.047** /世代 |
-| comp 修復（使用＋交代） | `λ+ρe` | **0.080** /世代 |
-| τ 学習 | `2·DTAU·q` | **0.002** /世代 |
-| （参考）半減期換算 σ損傷 / comp修復 / τ学習 | `ln2/レート` | 17.2 / 8.7 / 346 世代 |
-| （参考）人間の職業寿命 | — | ≈30 |
+| σ damage (self-ingestion) | `−ln(1−κ(1−e))` | **0.040** /gen |
+| σ repair | exogenous refresh `η` only (**`λ` does NOT repair σ**) | **0** (at η=0) |
+| comp damage (atrophy) | `ρ(1−e)` | **0.047** /gen |
+| comp repair (use + turnover) | `λ+ρe` | **0.080** /gen |
+| τ learning | `2·DTAU·q` | **0.002** /gen |
+| (ref) half-life equivalents σ-dmg / comp-repair / τ-learn | `ln2/rate` | 17.2 / 8.7 / 346 gen |
+| (ref) a human career | — | ≈30 |
 
 ```
-【訂正・撤回】初版の R = t_repair/t_damage = 1.74 および λ*=0.116 は撤回。
-(a) 分散の半減期(係数2)と平均待ち時間 1/λ を混在させ、(b) σ の修復を λ に誤帰属していた。
-正しくは上表のチャネル別レート: σ は内因修復を持たず(η=0 で非収束)、
-comp は λ > ρ(1−2e)=0.035 で収束(現在 0.067 で満足)。詳細は docs/ADDENDUM.md 点1-3。
+WITHDRAWN: the first revision's R = t_repair/t_damage = 1.74 and lambda*=0.116 are
+retracted. (a) They mixed a VARIANCE half-life (factor 2) with a MEAN waiting time
+1/lambda; (b) they mis-attributed sigma-repair to lambda. The correct statement is
+the per-channel rate table above: sigma has no endogenous repair (non-convergent at
+eta=0); comp converges for lambda > rho(1-2e)=0.035 (satisfied at 0.067).
+See docs/ADDENDUM.md points 1-3.
 ```
 
-- **σ は内因的に修復されない。** 自己摂取 0.040/世代 against 修復 0（外生のみ）。よって多様性は外生データ η が無い限り必ず床まで崩壊し、これは寿命と無関係。一方 comp は修復 0.080 > 損傷 0.047 で収束し、 here だけが寿命（交代）に支えられる。
-- **重みの学習は 500 世代。** 職業寿命 30 世代の間に `tau` が動くのは約 0.02。すなわち**重みは人の一生のスケールでは事実上凍結**しています（§6）。
-- 多様性の崩壊は `κ` の上限で判定できます。職業寿命 30 世代で半減させないための上限は `κ < 0.0115`。実際の自己摂取率はこれを大きく超えるため、**崩壊は最初のキャリアの内側で飽和します**。
+- **σ is not repaired endogenously.** Self-ingestion 0.040/gen against repair 0
+  (exogenous only). Diversity therefore collapses to the floor unless fresh external
+  data η arrives, independent of lifespan. comp, by contrast, converges
+  (repair 0.080 > damage 0.047); only comp is sustained by lifespan (turnover).
+- **Learning of the weight takes 500 generations.** Within a 30-generation career
+  `tau` moves ≈0.02. The weight is effectively **frozen on a human timescale** (§6).
+- Diversity collapse can be judged by an upper bound on `κ`: not halving within a
+  30-generation career requires `κ < 0.0115`. Real self-ingestion rates far exceed
+  this, so **collapse saturates inside the first career**.
 
 ---
 
-## 5. 「人には寿命がある限り破綻しない」への回答
+## 5. "As long as humans have a lifespan, it does not break" — half right, half wrong
 
-**半分正しく、半分は違います。そして正しい半分は「防いでいる」のではなく「隠している」です。**
+**The right half.** Lifespan (= turnover rate `λ>0`) is the *only* escape from the
+absorbing state `e*=0`. With `λ=0` (the same human stays; the role is automated or
+institutionalised), `comp→0`, `c_eff→2.2·c0`, and **even raising audit to `q=0.98`
+yields verification of only 0.153** (fresh meat: 0.512; ratio 3.35×). Lifespan
+guarantees the *existence* of repair.
 
-- **正しい半分。** 寿命（＝交代率 `λ>0`）は `e*=0` の吸収状態からの*唯一の脱出路*です。`λ=0`（同じ人間が居座る／役割が制度化・自動化される）とすると、`comp→0`、`c_eff→2.2·c0` となり、**あとから監査を `q=0.98` まで上げても検証率は 0.153 しか出ません**（新品なら 0.512、比 3.35 倍）。寿命は修復の*存在*を保証します。
-- **違う半分（訂正）。** 寿命（交代 λ）が修復するのは **comp（検証能力）だけ**で、σ（多様性）ではありません。σ の崩壊は λ をいくら上げても止まりません（実証: `rigor.lambda_does_not_repair_sigma` — λ=0 / 0.067 / 0.3 のすべてで σ 終端 = 0.005）。止めるのは外生データ η だけです。よって正しい叙述は「寿命は*能力の萎縮（吸収状態）*だけを妨げ、*多様性の崩壊*は妨げない」。
-- さらに、寿命が効くのは「肉が居る間」だけです。役割が自動化され `λ→0` になった瞬間、修復チャネルは消え、吸収状態が顕在化します。**寿命の保護は、肉が存在し続けることを条件とする条件付きの保護**です。
+**The wrong half (corrected).** Lifespan (turnover λ) repairs **competence (comp)
+only**, not diversity (σ). No amount of λ stops σ-collapse (demonstrated:
+`rigor.lambda_does_not_repair_sigma` — σ-terminal = 0.005 for λ=0 / 0.067 / 0.3);
+only exogenous data η stops it. The correct statement is therefore: **lifespan
+guards against the atrophy of competence (the absorbing state), but not against the
+collapse of diversity.** Lifespan's protection of competence is conditional on meat
+continuing to exist: automate the role (λ→0) and the absorbing state surfaces.
 
 ---
 
-## 6. 重みはどうあるか
+## 6. What the weights should be
 
-社会が人間の署名に置く重みと、置くべき重みは一致しません。現実的な監査率 `q_ext=0.05` の体制（**体制I＝観測されている世界**）での終端値：
+The weight society places on the human signature does not equal the weight warranted.
+Under a realistic audit rate `q_ext=0.05` (**Regime I = the observed world**), terminal
+values:
 
 ```
-e_bar  = 0.000     （誰も検証しない。q_boot = 0.229 を下回るため）
-w_opt  = -0.020    （肉の署名が持つべき認識論的重み。中継ノイズ分だけ *負*）
-w_act  = 0.95 → 0.63  （実際に置かれる重み。流暢さと署名だけで決まる）
-gap    = +0.65 〜 +0.97   ← これがこの系の「隠された全損失」
+e_bar  = 0.000     (nobody verifies; below q_boot = 0.229)
+w_opt  = -0.020    (warranted epistemic weight of the meat's signature; slightly
+                    *negative*, by the relay-noise term)
+w_act  = 0.95 -> 0.63   (weight actually placed; set by fluency and signature alone)
+gap    = +0.65 .. +0.97   <- this system's "hidden total loss"
 ```
 
-重みのあるべき姿は逆分散、すなわち `w_i ∝ 1/var_i` です。検証しない肉は分散を一切縮めないので
-`w_opt ≈ 0`（厳密には中継ノイズ分マイナス）になります。ところが社会は `w_act ≈ fluency ≈ 0.95` を置きます。
-**重みは「中身の分散」ではなく「表層の流暢さ」と「人間が署名している」という事実だけで決まる**——
-これが重みの誤り方であり、その差 `gap` が系の全損失です。
+The warranted weight is inverse-variance, `w_i ∝ 1/var_i`. Meat that does not verify
+shrinks no variance, so `w_opt ≈ 0` (strictly, negative by relay noise). Yet society
+places `w_act ≈ fluency ≈ 0.95`. **The weight is set not by the variance of content
+but by surface fluency and the bare fact that a human signed** — that is the manner of
+the mis-weighting, and its difference `gap` is the system's entire loss.
 
-そして §4 の通り `tau` の学習速度は `q` に比例するため、`gap` は一生のスケールでは是正されません。
-**重みは「あるべき値」に収束しないのではなく、収束する速度が人間の時間スケールより遅い**のです。
+And per §4, `tau`'s learning rate is proportional to `q`, so `gap` is not corrected on
+a lifespan scale. **The weight does not fail to converge to its warranted value; it
+converges more slowly than a human lifetime.**
 
 ---
 
-## 7. 答えはどう出て、提示されるのか隠されるのか
+## 7. How the answer emerges, and what is presented versus hidden
 
-### 7.1 答えの出方
-提示される答え `a` は、検証済み群と未検証群の**混合分布からの一回のdraw**です。
-`e_bar=0.21` なら、21% が `theta+小ノイズ`、79% が `theta+B+eps`。
-受信者は *どちらのdrawを引いたかを知る手段を持たない*（流暢さは両者で同一）。
-よって答えは「最適解」ではなく **「最適解 + 帰属不能な混合ラベル」** として出てしまいます。
-実効誤差は事後ではなく事前の期待値 `E|a−theta| = (1−e)·E|B+eps| + e·E|nu|` に固定され、
-個々のメッセージで改善できません。
+### 7.1 How it emerges
+The presented answer `a` is **a single draw from a mixture** of the verified and
+unverified populations. At `e_bar=0.21`: 21% at `theta+small noise`, 79% at
+`theta+B+eps`. The recipient has **no means of knowing which draw arrived** (fluency
+is identical for both). The answer therefore emerges not as "the optimum" but as
+**"the optimum plus an unattributable mixture label"**. Effective error is pinned to
+the prior expectation `E|a−theta| = (1−e)·E|B+eps| + e·E|nu|`, unimprovable per message.
 
-### 7.2 提示されるもの / 隠されるもの
-- **提示されるもの:** 答え（argmax）と、人間の署名。
-- **隠されるもの:** `e`（検証したか）、`w`（重み）、`sigma`（多様性の残り）、そして**目的関数そのもの**。
+### 7.2 Presented / hidden
+- **Presented:** the answer (argmax), and the human signature.
+- **Hidden:** `e` (whether it was verified), `w` (the weight), `sigma` (remaining
+  diversity), and **the objective function itself**.
 
-これは陰謀ではなく**構造**です。隠れている変数 `e` は、まさに「行使すると痕跡を残さない」変数だからです。
-`I(e ; a | 流暢さ) ≈ 0`。`e` を漏らす唯一の観測量は**遅延 `L`** だけですが、
-社会は応答速度を最適化するため、`L` を消しに行く＝**系は自分の唯一の診断器を自ら破壊します**（D5, 遅延選別）。
+This is not conspiracy but **structure**. The hidden variable `e` is precisely the
+variable whose exercise leaves no trace: `I(e ; a | fluency) ≈ 0`. The only observable
+leaking `e` is **latency `L`** — but society optimises response time, so it deletes
+`L`, i.e. **the system destroys its own only diagnostic** (D5, latency selection).
 
-### 7.3 内部から是正できないことの証明（位相構造）
-監査を内生（`q = q_ext + β·e_bar`）にして不動点を解くと：
+### 7.3 Proof that it cannot be reformed from within (phase structure)
+Making audit endogenous (`q = q_ext + β·e_bar`) and solving for fixed points:
 
 ```
-F'(q) = Φ·B / (c0_hi − c0_lo) = 0.673
-β_crit = 1 / F'(0) = 1.486   ← 相互監査の物理上限は 1
+F'(q) = PHI*B / (c0_hi - c0_lo) = 0.673
+beta_crit = 1 / F'(0) = 1.486   <- physical maximum of mutual audit is 1
 ```
 
-`β_crit = 1.49 > 1` なので、**相互監査だけでは検証の臨界質量に届かず、内側にティッピング・ポイントが存在しません。**
-起動には外部監査 `q_ext ≥ q_boot = 0.229` が*初期条件として*要り、是正まで含めると `q_ext ≳ 0.86`（ほぼ全件監査）。
-その間の `q_ext ≈ 0.3` は**デッドゾーン**で、`tau→0`（署名への信頼が壊れる）のに `e_bar` は 0.13 しか立たず、
-「信頼だけ失って検証は増えない」最悪の領域になります。
+Since `β_crit = 1.49 > 1`, **mutual audit alone cannot reach the critical mass of
+verification; there is no interior tipping point.** Bootstrapping requires external
+audit `q_ext ≥ q_boot = 0.229` as an *initial condition*, and full reform requires
+`q_ext ≳ 0.86` (near-total audit). The intermediate `q_ext ≈ 0.3` is a **dead zone**:
+`tau→0` (trust in the signature is destroyed) while `e_bar` reaches only 0.13 —
+"losing trust without gaining verification", the worst region.
 
-**結論: ミートプロキシ文化は内部からの漸進的改革では是正不能。ブートストラップは必ず外から来る。**
-
----
-
-## 8. 結論
-
-1. ミートプロキシは思考実験ではなく**吸収状態を持つ力学系**であり、語の自己矛盾がそのまま `e*=0` の安定性として現れる。
-2. 肉の情報的付加価値は 0（ΔE|err| = 0.0002）。社会的効用は負。
-3. 破綻点は単一閾値ではなく**チャネル別レート**の大小関係。σ は内因修復 0（非収束）、comp は収束、τ 学習 0.002 が最遅。初版の `R=1.74` は撤回（docs/ADDENDUM.md）。
-4. 「寿命がある限り破綻しない」は、寿命が修復の*存在*を保証する点で正しく、修復の*速度*が損傷に負ける点で誤り。寿命は破綻を隠しているだけで、防いでいない。
-5. 重みは `w_opt≈0` であるべきところに `w_act≈0.95` が置かれ、その差 `gap≈0.7–1.0` が恒久的に固定される。是正速度（500世代）が人間の時間（30世代）を大きく超えるため。
-6. **答えは提示され、重みは隠される。** 隠れるのは意図ではなく、`e` が「行使しても痕跡を残さない」変数だから。系は唯一の診断器（遅延）を最適化で消すため、この隠蔽は自己維持的である。
+**Conclusion: a meat-proxy culture cannot be reformed by incremental internal change.
+The bootstrap must come from outside.**
 
 ---
 
-*ファイル: `src/model.py`（モデル）, `src/figure_time.py`（集計・図）, `results/summary_time.json` / `results/sim_raw.json`（数値）, `figures/fig_time_axis.png`（図6面）*
+## 8. Conclusions
+
+1. The meat proxy is not a thought experiment but **a dynamical system with an
+   absorbing state**; the term's self-contradiction appears exactly as the stability
+   of `e*=0`.
+2. The meat's informational value-add is 0 (ΔE|err| = 0.0002); social utility negative.
+3. The breaking point is not one threshold but the ordering of **per-channel
+   rates**: σ has zero endogenous repair (non-convergent), comp converges, and τ
+   learning (0.002) is the slowest channel. The first revision's `R=1.74` is
+   withdrawn (docs/ADDENDUM.md).
+4. "It does not break as long as there is lifespan" is right that lifespan guarantees
+   the *existence* of repair, wrong that repair's *speed* beats damage. Lifespan hides
+   collapse; it does not prevent it.
+5. The weight is placed at `w_act≈0.95` where `w_opt≈0` is warranted; `gap≈0.7–1.0` is
+   frozen permanently, because correction speed (500 gens) exceeds human time (30 gens).
+6. **The answer is presented; the weight is hidden.** Hidden not by intent but because
+   `e` is a variable that leaves no trace when exercised; and because the system
+   optimises away its only diagnostic (latency), the hiding is self-maintaining.
 
 ---
 
-# 付録: スケール軸 — 署名、選択のコイン、世代収束
+# Appendix: the scale axis — signature, the coin of choice, generational convergence
 
-> 第一の図(`figures/fig_time_axis.png`)が時間軸だったのに対し、こちらはスケール軸。
-> 再現: `python3 src/figure_scale.py` → `figures/fig_scale_axis.png` / `results/summary_scale.json`
+> Where the first figure (`figures/fig_time_axis.png`) was the time axis, this is the
+> scale axis. Reproduce: `python3 src/figure_scale.py` →
+> `figures/fig_scale_axis.png` / `results/summary_scale.json`
 
-## S1. 署名はどの社会的距離まで効力を持つか（ダンバー地平）
+## S1. Over what social distance does a signature retain force (the Dunbar horizon)
 
-監査 `q` は社会的距離の関数です（反復ゲームと評判が安い内側ほど高い）。層ごとに `e_bar=F(q)` と `gap` を出すと：
+Audit `q` is a function of social distance (repeated games and cheap reputation make
+`q` high on the inside). Per layer, `e_bar=F(q)` and `gap`:
 
-| 層 | n | q | e_bar | gap |
+| layer | n | q | e_bar | gap |
 |---|---|---|---|---|
 | support | 5 | 0.80 | 0.39 | 0.40 |
 | sympathy | 15 | 0.50 | 0.18 | 0.65 |
@@ -193,34 +274,47 @@ F'(q) = Φ·B / (c0_hi − c0_lo) = 0.673
 | Dunbar | 150 | 0.10 | 0.00 | 0.97 |
 | beyond | strangers | 0.05 | 0.00 | 0.97 |
 
-**署名/痕跡の効力はダンバー地平の内側だけで立ち、外側では構造的に体制I（ミートプロキシ）になります。**
-地平の外では、美徳の欠如ではなく*構造*があなたをミートプロキシにします。
-「ダンバー数を組み上げる」とは、署名が効力を持つスケールを選ぶ設計行為です。
+**A signature/trace retains force only inside the Dunbar horizon; outside it, Regime I
+(meat proxy) holds by structure.** Beyond the horizon it is not a lack of virtue but
+*structure* that makes you a meat proxy. "Assembling the Dunbar number" is the design
+act of choosing the scale at which your trace still has force.
 
-## S2. 選択のコイン（rate-distortion）
+## S2. The coin of choice (rate-distortion)
 
-痕跡 `T` は k 次元（形式・スケール・媒体・意図・持続・受手…）。
-各次元を歪率 12.5% で符号化するには `R_dim = 0.5·log2(1/0.125) = 1.5 bit`、よって `H(T)=1.5k bit`。
-コインは 1 bit なので、運べる痕跡の割合は `1/(1.5k)`。
-
-```
-k=6  →  保持 11%  /  棄損 89%
-```
-
-**コインが*無損失で*運ぶものは一つだけ: 「署名者が選択をした」という二値の事実 = `e` そのもの。**
-すなわちコインを置くとは、最適解を渡すことではなく**説明責任を渡すこと**。
-一次元への削ぎ落としは内容のチャネルを壊すが、責任のチャネルは壊さない（むしろそれがコインの全内容）。
-
-## S3. 世代収束は条件付き
-
-comp チャネルの収束条件は `λ > ρ(1−2e) = 0.035`。σ チャネルは λ と無関係に非収束（修復=外生 η=0 < 損傷 0.040）。
+The trace `T` is k-dimensional (form, scale, medium, intent, duration, audience…).
+Coding each dimension at distortion 12.5% costs `R_dim = 0.5·log2(1/0.125) = 1.5 bit`,
+so `H(T)=1.5k bit`. The coin is 1 bit, so the share of the trace it can carry is
+`1/(1.5k)`.
 
 ```
-comp : λ=0.067 > 0.035   収束側
-sigma: η=0     < 0.040   非収束（寿命では救えない）
+k=6  ->  carried 11%  /  discarded 89%
 ```
 
-- **能力(comp)チャネル**: 交代が必ず `comp=1` にリセットするので、無条件に世代収束する。
-- **多様性(σ)チャネル**: λ では収束**しない**。外生 `η > κ(1−e)` でのみ収束。
+**Exactly one thing travels losslessly: the binary fact that a signer chose = `e`
+itself.** Placing the coin is therefore not handing over the optimum but **handing
+over accountability**. The shave to one dimension destroys the content channel but not
+the accountability channel — indeed the coin's entire content is accountability.
 
-よって「個人では衝突しても世代では収束する」は、能力については定理、多様性については**条件付き定理**です。
+## S3. Generational convergence is conditional
+
+The competence channel converges iff `λ > ρ(1−2e) = 0.035`. The diversity channel is
+non-convergent in λ regardless (repair = exogenous η=0 < damage 0.040).
+
+```
+comp : lambda=0.067 > 0.035   convergent
+sigma: eta=0        < 0.040   non-convergent (lifespan cannot save it)
+```
+
+- **Competence (comp) channel:** turnover always resets `comp=1`, so it converges
+  generationally unconditionally.
+- **Diversity (σ) channel:** does **not** converge via λ; converges only for
+  exogenous `η > κ(1−e)`.
+
+So "individually they collide, generationally they converge" is a theorem for
+competence and a **conditional theorem** for diversity.
+
+---
+
+*Files: `src/model.py` (model), `src/figure_time.py` (aggregation + figures),
+`results/summary_time.json` / `results/sim_raw.json` (numbers),
+`figures/fig_time_axis.png` (6-panel figure).*

@@ -1,42 +1,49 @@
 """
-ミートプロキシの演算モデル  v4  (個体群版・最終)
-====================================================
-主体: M(モデル) / P_i(プロキシ=肉, i=1..N) / S(社会=受信者)
+Meat proxy - a computational model, v4 (population version, final)
+==================================================================
+Agents: M (model) / P_i (proxy = meat, i=1..N) / S (society = recipient)
 
-■ 1 世代の流れ
-  1. 真の最適解 theta_t が立つ
-  2. モデルが答える   m_i = theta_t + B + eps_i ,  eps_i ~ N(0, sigma_t^2)
-  3. 肉 i が検証するかどうか決める
-        実行コスト  c_i^eff = c0_i * (1 + GAMMA*(1 - comp_i))
-        検証する ⇔  q * PHI * B > c_i^eff           …… bang-bang
-     ※ q = 監査(=外部検出)確率, PHI = 罰, B = 検証が取り除ける誤差
-     ※ 費用 c_i^eff は「私的・確実・即時」、便益 q*PHI*B は「確率的・遅延」
-  4. 社会に提示される   a_i = (1-e_i)*m_i + e_i*theta_t + nu_r + e_i*nu_v(comp_i)
-        nu_r ~ N(0, DELTA_R^2)  中継ノイズ(貼り間違い・切り詰め)。e と無関係に常に乗る
-        nu_v ~ N(0,(ETA/comp)^2) 検証ノイズ。検証した分だけ乗る
-        e=0 → a = m + nu_r     付加情報ゼロ、遅延 L0 とノイズだけ
-        e=1 → a = theta + ...  完全検証、遅延 L0+DL
-  5. 監査は |a_i - theta_t| を観測するが、その出所を帰属できない(P4)
-     → 罰は常に「署名した人間」に落ちる → 社会の信頼 tau が更新される
-  6. 能力の萎縮   comp_i <- comp_i + RHO*(e_i - comp_i)
-  7. 世代交代     確率 LAM で肉が新品(c0 再抽選, comp=1)に置き換わる
-  8. 多様性の崩壊 sigma <- max(sigma*(1 - KAPPA*(1-e_bar)), SIG_MIN)
-     ※ 未検証で通過した出力だけが学習データに還る
+* One generation
+  1. The true optimum theta_t is drawn.
+  2. The model answers   m_i = theta_t + B + eps_i ,  eps_i ~ N(0, sigma_t^2)
+  3. Meat i decides whether to verify:
+        execution cost  c_i^eff = c0_i * (1 + GAMMA*(1 - comp_i))
+        verifies iff    q * PHI * B > c_i^eff           ... bang-bang
+     where q = audit (= external detection) rate, PHI = penalty,
+     B = the error that verification removes.
+     The cost c_i^eff is private, certain, immediate;
+     the benefit q*PHI*B is stochastic and delayed.
+  4. Society is shown  a_i = (1-e_i)*m_i + e_i*theta_t + nu_r + e_i*nu_v(comp_i)
+        nu_r ~ N(0, DELTA_R^2)   relay noise (mispaste, truncation); always on
+        nu_v ~ N(0,(ETA/comp)^2) verification noise; only on the verified part
+        e=0 -> a = m + nu_r      zero added information; latency L0 and noise only
+        e=1 -> a = theta + ...   full verification; latency L0+DL
+  5. The audit observes |a_i - theta_t| but cannot attribute its source (P4)
+     -> the penalty always falls on "the human who signed" -> trust tau updates
+  6. Competence atrophy   comp_i <- comp_i + RHO*(e_i - comp_i)
+  7. Generational turnover: with prob LAM the meat is replaced by a fresh one
+     (c0 resampled, comp=1)
+  8. Diversity collapse  sigma <- max(sigma*(1 - KAPPA*(1-e_bar)), SIG_MIN)
+     only output that passed UNverified returns to the training data
 
-■ 命題
-  P1  q*PHI*B <= c0 の肉にとって e=0 は最適反応。かつ comp の萎縮で c^eff が
-      上昇するので、後から q を上げても戻れない(ヒステリシス / 吸収状態)。
-  P2  集団の平均検証率 e_bar は「新品の供給」だけで維持される:
-          e_bar ≈ LAM / (LAM + 萎縮による脱落率)
-      → 肉の均衡は寿命が系に貸しているだけで、解ではない。
-  P3  多様性の半減期  t_half = ln0.5 / (2 ln(1 - KAPPA(1-e_bar)))
-      職業寿命 L 世代で破綻しない条件  KAPPA(1-e_bar) < 1 - 0.5^(1/(2L))
-  P4  監査は誤差を見るが出所を見ない。よって罰の帰属先は常に人間。
-  P5  I(e ; a | 流暢さ) ≈ 0。e を漏らす唯一の観測量は遅延 L だけで、
-      社会はそれを最適化して消す → 系は自分の唯一の診断器を破壊する。
-  P6  重み: 社会が人間の署名に置く重み w_act = tau*fluency は、
-      置くべき重み w_opt = 1 - var_P/var_M と一致しない。
-      その差 gap = w_act - w_opt が、この系の「隠された全損失」。
+* Propositions
+  P1  For meat with q*PHI*B <= c0, e=0 is the best response; and because comp
+      atrophy raises c^eff, raising q later cannot restore e
+      (hysteresis / absorbing state).
+  P2  The population mean verification rate e_bar is sustained only by the
+      supply of fresh meat:  e_bar ~ LAM / (LAM + atrophy-driven dropout).
+      The meat equilibrium is borrowed from lifespan; it is not a solution.
+  P3  Diversity half-life (of the std) t_half = ln0.5 / ln(1 - KAPPA(1-e_bar));
+      sigma is repaired ONLY by exogenous refresh eta, never by turnover lambda.
+      See src/rigor.py channel_rates (review pts 1-3).
+  P4  The audit sees the error but not its source; the penalty's addressee is
+      always the human.
+  P5  I(e ; a | fluency) ~ 0. The only observable leaking e is latency L, and
+      society optimises it away -> the system destroys its own only diagnostic.
+  P6  Weights: the weight society places on the human signature,
+      w_act = tau*fluency, does not equal the warranted weight
+      w_opt = 1 - var_P/var_M. The difference gap = w_act - w_opt is this
+      system's "hidden total loss".
 """
 
 import json
@@ -46,29 +53,29 @@ import numpy as np
 
 REPO = Path(__file__).resolve().parents[1]
 
-# ------------------------------------------------------------------ 参数
-N       = 3000    # 肉の数
-B       = 0.35    # モデルの系統的バイアス = 検証が取り除ける誤差
-ETA     = 0.20    # 検証ノイズ(comp=1)
-DELTA_R = 0.05    # 中継ノイズ
-C0_LO, C0_HI = 0.08, 0.60   # 検証費用の個体差
-GAMMA   = 1.20    # 萎縮が検証費用を押し上げる係数
-RHO     = 0.06    # 能力の萎縮/回復率
-PHI     = 1.00    # 監査ペナルティ
-KAPPA   = 0.05    # 未検証出力の自己摂取率
-LAM     = 0.067   # 世代交代率(≈15年)
+# ------------------------------------------------------------------ parameters
+N       = 3000    # number of meat
+B       = 0.35    # model's systematic bias = the error verification removes
+ETA     = 0.20    # verification noise (at comp=1)
+DELTA_R = 0.05    # relay noise
+C0_LO, C0_HI = 0.08, 0.60   # individual spread of verification cost
+GAMMA   = 1.20    # factor by which atrophy inflates verification cost
+RHO     = 0.06    # competence atrophy / recovery rate
+PHI     = 1.00    # audit penalty
+KAPPA   = 0.05    # self-ingestion rate of unverified output
+LAM     = 0.067   # generational turnover rate (~15 yr)
 SIG_MIN = 0.005
 SIGMA_REFRESH = 0.0   # exogenous fresh-data refresh rate eta. lambda does NOT repair sigma.
 SIG0    = 1.0
 L0, DL  = 1.0, 4.0
-FLUENCY = 0.95    # 流暢さ(検証と無関係に高い)
-AUDIT_TOL = 0.30  # 監査が「誤り」と判定する閾値
-DTAU    = 0.02    # 監査1件あたりの信頼更新
+FLUENCY = 0.95    # fluency (high regardless of verification)
+AUDIT_TOL = 0.30  # threshold at which an audit calls it an error
+DTAU    = 0.02    # trust update per audit event
 
 
-# ------------------------------------------------------------------ 解析式
+# ------------------------------------------------------------------ closed forms
 def q_critical(c0=B * 0 + 0.30, phi=PHI, b=B):
-    """検証が私的に採算する最低監査確率  q_c = c0 / (PHI*B)"""
+    """Lowest audit rate at which verification pays privately: q_c = c0/(PHI*B)."""
     return c0 / (phi * b)
 
 
@@ -89,11 +96,11 @@ def t_half_var(kappa=KAPPA, e_bar=0.0):
 
 
 def kappa_ceiling(L_gen, e_bar=0.0):
-    """職業寿命 L 世代では多様性が半減しないための KAPPA 上限"""
+    """Upper bound on KAPPA such that diversity does not halve within a career of L generations."""
     return 1.0 - 0.5 ** (1.0 / (2 * L_gen * (1 - e_bar)))
 
 
-# ------------------------------------------------------------------ 本体
+# ------------------------------------------------------------------ core loop
 def run(q, T=400, lam=LAM, kappa=KAPPA, latency_selection=0.0,
         sigma0=SIG0, tau0=1.0, seed=7, hetero=True, comp0=None, c0_init=None):
     rng = np.random.default_rng(seed)
@@ -112,48 +119,48 @@ def run(q, T=400, lam=LAM, kappa=KAPPA, latency_selection=0.0,
         eps = rng.normal(0, sigma, N)
         m = theta + B + eps
 
-        # 3. 検証の意思決定
+        # 3. verification decision
         c_eff = c0 * (1 + GAMMA * (1 - comp))
         want = (q * PHI * B) > c_eff
-        # P5: 遅延での選別 — 検証しようとした個体ほど脱落する
+        # P5: selection on latency - those who try to verify are dropped more
         if latency_selection > 0:
             survive = rng.random(N) > latency_selection
             e = (want & survive).astype(float)
         else:
             e = want.astype(float)
 
-        # 4. 提示される答え
+        # 4. the answer presented
         a = ((1 - e) * m + e * theta
              + rng.normal(0, DELTA_R, N)
              + e * rng.normal(0, ETA, N) / np.maximum(comp, 1e-6))
         err = np.abs(a - theta)
         e_bar = float(e.mean())
 
-        # 5. 監査(P4: 出所を帰属できない。罰は人間に落ちる)
-        #    ★ tau の学習速度は監査頻度 q に比例する。q が薄ければ学習は事実上止まる。
+        # 5. audit (P4: source cannot be attributed; penalty falls on the human)
+        #    * tau's learning speed is proportional to audit frequency q; thin q => learning stalls.
         aud = rng.random(N) < q
         n_aud = int(aud.sum())
         if n_aud > 0:
             bad = float((err[aud] > AUDIT_TOL).mean())
             tau = float(np.clip(tau + DTAU * q * (0.5 - bad) * 2, 0, 1))
 
-        # 6. 萎縮 / 回復
+        # 6. atrophy / recovery
         comp = comp + RHO * (e - comp)
         comp = np.clip(comp, 0.0, 1.0)
 
-        # 7. 世代交代
+        # 7. generational turnover
         repl = rng.random(N) < lam
         if repl.any():
             comp[repl] = 1.0
             if hetero:
                 c0[repl] = rng.uniform(C0_LO, C0_HI, int(repl.sum()))
 
-        # 8. 多様性の崩壊 (損傷) と外生リフレッシュ (修復)。交代 lam は sigma を修復しない。
+        # 8. diversity collapse (damage) + exogenous refresh (repair); turnover lam does NOT repair sigma.
         sigma = sigma * (1 - kappa * (1 - e_bar))
         sigma = sigma + SIGMA_REFRESH * (SIG0 - sigma)
         sigma = max(sigma, SIG_MIN)
 
-        # 6'. 重み
+        # 6'. weights
         var_M = sigma ** 2 + B ** 2
         var_P = float(np.mean((1 - e) ** 2 * var_M + DELTA_R ** 2
                               + e ** 2 * (ETA / np.maximum(comp, 1e-6)) ** 2))
@@ -179,13 +186,13 @@ def series(rows, step=25):
             for r in rows[::step]]
 
 
-# ------------------------------------------------------------------ 主実行
+# ------------------------------------------------------------------ main
 if __name__ == "__main__":
     out = {}
 
     out["P1_q_critical_table"] = [
         dict(c0=c0, q_c=round(q_critical(c0), 3),
-             verdict=("検証する" if q_critical(c0) < 0.95 else "検証しない"))
+             verdict=("verifies" if q_critical(c0) < 0.95 else "does not verify"))
         for c0 in (0.08, 0.15, 0.30, 0.45, 0.60)]
     out["P1_share_verifying_vs_q"] = []
     for q in (0.0, 0.2, 0.4, 0.6, 0.8, 0.86, 0.95, 1.0):
@@ -220,15 +227,15 @@ if __name__ == "__main__":
         out[f"sim_{name}"] = agg(r)
         out[f"series_{name}"] = series(r)
 
-    # P1 ヒステリシス: 交代なしで300世代放置した「萎縮した肉」に q=0.98 の監査を入れる
+    # P1 hysteresis: meat left 300 gens without turnover, then audited at q=0.98
     ph1 = run(q=0.0, T=300, lam=0.0, seed=11)
     rng1 = np.random.default_rng(11)
-    # ph1 と同じ個体群を再現するため、萎縮後の comp と c0 を直接持ち越す
-    # (簡便のため、同一パラメータで萎縮末状態を解析的に作る)
+    # carry over the atrophied comp and the same c0 to reproduce ph1's population
+    # (for brevity, build the atrophied end-state analytically with same parameters)
     comp_atrophied = np.full(N, 0.0)
     c0_same = rng1.uniform(C0_LO, C0_HI, N)
     ph2 = run(q=0.98, T=300, lam=0.0, seed=11, comp0=comp_atrophied, c0_init=c0_same)
-    ph3 = run(q=0.98, T=300, lam=0.0, seed=11)                      # 新品の肉
+    ph3 = run(q=0.98, T=300, lam=0.0, seed=11)                      # fresh meat
     c_eff_atroph = c0_same * (1 + GAMMA * (1 - comp_atrophied))
     out["P1_hysteresis"] = dict(
         comp_after_300gen_no_audit=round(float(np.mean(
@@ -237,29 +244,29 @@ if __name__ == "__main__":
         share_still_verifying=round(float(((0.98 * PHI * B) > c_eff_atroph).mean()), 4),
         e_bar_atrophied_at_q098=round(float(np.mean([x["e_bar"] for x in ph2[-100:]])), 4),
         e_bar_fresh_at_q098=round(float(np.mean([x["e_bar"] for x in ph3[-100:]])), 4),
-        verdict="同じ q でも、萎縮した肉は検証できない。e*=0 は吸収状態")
+        verdict="at the same q, atrophied meat cannot verify; e*=0 is an absorbing state")
 
-    # ---- P5/P6: 帰属不能の損失
-    # 社会が「検証済みか未検証か」を判別できないので、重みをメッセージ単位で
-    # 最適化できない。判別できた場合とできなかった場合の実効誤差を比べる。
+    # ---- P5/P6: the loss from non-attribution
+    # Society cannot tell verified from unverified, so it cannot set the weight
+    # per message. Compare effective error with and without that discrimination.
     def effective_error(e_bar, sigma=B * 0 + 0.005):
         var_M = sigma ** 2 + B ** 2
-        sd_M = float(np.sqrt(2 / np.pi) * np.sqrt(var_M))   # E|B+eps| 近似
-        sd_V = float(np.sqrt(2 / np.pi) * ETA)              # 検証済み残余誤差
+        sd_M = float(np.sqrt(2 / np.pi) * np.sqrt(var_M))   # approx E|B+eps|
+        sd_V = float(np.sqrt(2 / np.pi) * ETA)              # residual error when verified
         no_attr = (1 - e_bar) * sd_M + e_bar * sd_V
-        with_attr = e_bar * sd_V + (1 - e_bar) * min(sd_M, sd_V + C0_LO)  # 未検証は再検査に回す
+        with_attr = e_bar * sd_V + (1 - e_bar) * min(sd_M, sd_V + C0_LO)  # unverified -> re-check
         return round(no_attr, 4), round(with_attr, 4), round(no_attr - with_attr, 4)
 
     out["P5_attribution_loss"] = {
         f"e_bar={e}": dict(zip(("no_attr", "with_attr", "loss"), effective_error(e)))
         for e in (0.0, 0.21, 0.50)}
-    out["P5_note"] = ("判別チャネルは遅延 L だけ。L は社会が最適化して消す対象なので、"
-                      "系は自分の唯一の診断器を自ら破壊する。")
+    out["P5_note"] = ("The only discriminating channel is latency L; since L is what society optimises away, "
+                      "the system destroys its own only diagnostic.")
 
-    # ---- 三つの時定数の比較(これが「寿命」命题の答え)
+    # ---- comparing the three timescales (the answer to the 'lifespan' proposition)
     e_ref = 0.21
-    t_damage = t_half(KAPPA, e_ref)          # 多様性が半減するまでの世代数
-    t_repair = 1.0 / LAM                     # 肉が入れ替わって修復される時定数
+    t_damage = t_half(KAPPA, e_ref)          # generations until diversity halves
+    t_repair = 1.0 / LAM                     # timescale of repair via meat turnover
     out["timescales"] = dict(
         t_damage_half_gen=round(t_damage, 2),
         t_repair_gen=round(t_repair, 2),
@@ -267,8 +274,8 @@ if __name__ == "__main__":
         lambda_star_for_R1=round(1.0 / t_damage, 4),
         tau_learning_timeconstant={str(q): round(1.0 / (2 * DTAU * q), 1)
                                    for q in (0.02, 0.05, 0.10, 0.55)},
-        verdict=("R>1: 損傷のほうが修復より速い。寿命は破綻を防がない、遅らせるだけ。"
-                 if t_repair / t_damage > 1 else "R<=1: 修復が損傷に追いつく"))
+        verdict=("R>1: damage outruns repair; lifespan delays collapse, it does not prevent it."
+                 if t_repair / t_damage > 1 else "R<=1: repair keeps up with damage"))
 
     print(json.dumps(out, ensure_ascii=False, indent=2))
     with open(REPO / "results" / "sim_raw.json", "w") as f:
@@ -276,14 +283,14 @@ if __name__ == "__main__":
 
 
 # ==================================================================
-#  P7: 監査 q は外生ではない。q =「誰かが読む」= e の別名。よって内生。
+#  P7: audit q is not exogenous. q = 'someone reads' = another name for e; hence endogenous.
 #      q_t = q_ext + BETA * e_bar_t
-#        q_ext : 外部監査(本番障害・撤回・訴訟・査読)。小さく、遅れて来る
-#        BETA  : 相互監査。同僚が互いに読む度合い。物理上限は 1
-#      不動点  e* = F(q_ext + BETA*e*)
+#        q_ext : external audit (outages, retractions, suits, peer review); small, lagged
+#        BETA  : mutual audit; how much colleagues read each other; physical max 1
+#      fixed point  e* = F(q_ext + BETA*e*)
 #        F(q) = P(c0 < q*PHI*B) = clip((q*PHI*B - C0_LO)/(C0_HI - C0_LO), 0, 1)
 #      F'(q) = PHI*B/(C0_HI-C0_LO)  →  BETA_crit = (C0_HI-C0_LO)/(PHI*B)
-#      BETA_crit > 1 なら、相互監査だけでは高検証均衡に届かない。
+#      if BETA_crit > 1, mutual audit alone cannot reach the high-verification equilibrium.
 # ==================================================================
 def F(q):
     """Verifying share among FRESH meat (comp=1) -- a static approximation.
@@ -305,13 +312,13 @@ def fixed_points(q_ext, beta, n=4000):
     sign = np.sign(g)
     idx = np.where(np.diff(sign) != 0)[0]
     fps = [round(float(e[i]), 4) for i in idx]
-    # 安定性: g が + から - に変われば安定
+    # stability: stable where g flips from + to -
     stab = [bool(sign[i] > 0) for i in idx]
     return fps, stab
 
 
 def run_endogenous(q_ext, beta, T=400, **kw):
-    """q を内生にして回す"""
+    """Run with q endogenous."""
     rng = np.random.default_rng(kw.pop("seed", 7))
     c0 = rng.uniform(C0_LO, C0_HI, N)
     comp = np.ones(N)
@@ -320,7 +327,7 @@ def run_endogenous(q_ext, beta, T=400, **kw):
     for t in range(T):
         theta = float(rng.normal(0, 1))
         m = theta + B + rng.normal(0, sigma, N)
-        # 前世代の e_bar から今の q を決める(1期ラグ)
+        # current q from last generation's e_bar (one-period lag)
         e_prev = rows[-1]["e_bar"] if rows else F(q_ext)
         q_t = float(np.clip(q_ext + beta * e_prev, 0, 1))
         c_eff = c0 * (1 + GAMMA * (1 - comp))
