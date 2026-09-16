@@ -17,6 +17,7 @@ from matplotlib import font_manager
 REPO = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO / "src"))
 import model as sim
+import rigor as RG
 
 plt.rcParams["font.family"] = "DejaVu Sans"
 plt.rcParams["axes.unicode_minus"] = False
@@ -64,13 +65,20 @@ for name, q_ext, beta in [("I   q_ext < q_boot", 0.05, 1.0),
 R["regimes"] = regimes
 
 # ------------------------------------------------------------------ 4. timescales
+_eb = 0.21
+_cr = RG.channel_rates(_eb)
 R["timescales"] = dict(
-    t_damage_half_gen=round(sim.t_half(sim.KAPPA, 0.21), 2),
-    t_repair_gen=round(1 / sim.LAM, 2),
-    R_ratio=round((1 / sim.LAM) / sim.t_half(sim.KAPPA, 0.21), 3),
-    lambda_star=round(1 / sim.t_half(sim.KAPPA, 0.21), 4),
-    tau_timeconst={str(q): round(1 / (2 * sim.DTAU * q), 1)
-                   for q in (0.02, 0.05, 0.10, 0.55)},
+    rates={k: round(v, 5) for k, v in _cr.items()},
+    half_lives_gen=dict(
+        sigma_damage=round(sim.t_half(sim.KAPPA, _eb), 2),
+        sigma_repair=float("inf"),        # exogenous only; lambda does NOT repair sigma
+        comp_repair=round(float(np.log(2) / _cr["comp_repair"]), 2),
+        tau_learn=round(float(np.log(2) / _cr["tau_learn"]), 1)),
+    sigma_convergent_at_eta0=RG.sigma_convergent(0.0, sim.KAPPA, _eb),
+    comp_convergent_at_defaults=RG.comp_convergent(sim.LAM, sim.RHO, _eb),
+    withdrawn_R=("the earlier R=t_repair/t_damage=1.74 mixed a VARIANCE half-life "
+                 "with a MEAN waiting time and mis-attributed sigma-repair to lambda; "
+                 "superseded by rigor.channel_rates (review pts 1,2,3)"),
     human_career_gen=30)
 
 R["kappa_ceiling"] = {f"L={L}gen": round(sim.kappa_ceiling(L, 0.0), 5)
@@ -138,22 +146,25 @@ a.set_title("(2) The bootstrap threshold\nNothing below q_ext = 0.229 ever verif
 a.legend(fontsize=8, loc="upper left", facecolor="#1b2130",
          edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (3) the three timescales
+# (3) timescales: all as half-lives (same quantile) [corrected]
 a = ax[0, 2]
-ts = R["timescales"]
-labels = ["damage\n(diversity half-life)", "repair\n(human turnover 1/λ)",
-          "learning of w\n(τ time const, q=0.05)"]
-vals = [ts["t_damage_half_gen"], ts["t_repair_gen"], ts["tau_timeconst"]["0.05"]]
-cols = [C["red"], C["amber"], C["violet"]]
+hl = R["timescales"]["half_lives_gen"]
+labels = ["sigma damage\n(self-ingestion)", "sigma repair\n(exogenous, eta=0)",
+          "comp repair\n(turnover+use)", "tau learning\n(q=0.05)"]
+vals = [hl["sigma_damage"], 900.0, hl["comp_repair"], hl["tau_learn"]]
+cols = [C["red"], C["grey"], C["cyan"], C["violet"]]
 bars = a.barh(labels, vals, color=cols, height=0.52)
-a.axvline(30, color=C["cyan"], lw=2, ls="--")
-a.text(34, -0.42, "human career\n≈ 30 gen", color=C["cyan"], fontsize=8.5)
-for b, v in zip(bars, vals):
-    a.text(v * 0.6, b.get_y() + b.get_height() / 2, f"{v:.0f}",
-           va="center", color="#0f1117", fontsize=11, fontweight="bold")
-a.set_xscale("log"); a.set_xlim(1, 900)
-a.set_xlabel("generations (log)")
-a.set_title("(3) Timescales: damage outruns repair,\nlearning of w is slowest of all")
+bars[1].set_hatch("//"); bars[1].set_alpha(0.5)
+a.text(900 * 0.55, 1, "inf", va="center", color="#eef2fb", fontsize=11, fontweight="bold")
+for k, (b, v) in enumerate(zip(bars, vals)):
+    if k != 1:
+        a.text(v * 0.6, b.get_y() + b.get_height() / 2, f"{v:.0f}",
+               va="center", color="#0f1117", fontsize=11, fontweight="bold")
+a.axvline(30, color=C["amber"], lw=2, ls="--")
+a.text(34, -0.45, "human career ~30 gen", color=C["amber"], fontsize=8.5)
+a.set_xscale("log"); a.set_xlim(1, 2000)
+a.set_xlabel("half-life, generations (log) - same quantile for all channels")
+a.set_title("(3) CORRECTED: one quantile for all channels;\nsigma has no endogenous repair (R=1.74 withdrawn)")
 
 # (4) divergence of weights (Regime I trajectory)
 a = ax[1, 0]

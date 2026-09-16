@@ -7,12 +7,13 @@ Three questions.
   S1  Up to what social distance does a signature / trace retain force?
       -> Dunbar layers
   S2  When a many-dimensional trace is shaved down to the "coin of choice"
-      (1 bit), what survives?
+      (1 bit), what survives?   [METAPHORICAL application - see docs/ANALYSIS.md]
   S3  Does individual-scale collision really converge at generational scale?
 
 S1 Dunbar horizon
    Audit q is a function of social distance: repeated games and cheap
-   reputation make q high on the inside.
+   reputation make q high on the inside.  (layer q values are ASSUMPTIONS;
+   see rigor.dunbar_sensitivity for sensitivity.)
      layer 5   (support)   q~0.80
      layer 15  (sympathy)  q~0.50
      layer 50  (affinity)  q~0.25
@@ -22,7 +23,7 @@ S1 Dunbar horizon
    -> The force of a trace/signature stands only inside the Dunbar horizon;
       outside it the meat-proxy regime (Regime I) holds by structure, not choice.
 
-S2 The coin of choice (rate-distortion)
+S2 The coin of choice (rate-distortion)  [metaphorical]
    The trace T is k-dimensional (form, scale, medium, intent, duration,
    audience...). Coding each dimension at distortion D/sigma^2 = 0.125 costs
    R_dim = 0.5*log2(1/0.125) = 1.5 bit, so H(T) = 1.5k bit. The coin is 1 bit.
@@ -31,13 +32,9 @@ S2 The coin of choice (rate-distortion)
    Yet exactly one thing travels losslessly: the binary fact that a signer
    chose = e itself.  The coin = e made public.
 
-S3 Condition for generational convergence
-   R = t_repair / t_damage = (1/lambda)/t_half.
-   R<1, i.e. generational convergence, holds only when lambda > lambda*=1/t_half.
-   Now lambda=0.067 -> R=1.74 (divergent side); lambda=0.15 -> R=0.78 (convergent).
-   -> "Generationally it converges" is true for the competence (comp) channel,
-      and true for the diversity (sigma) channel only under lambda>lambda*.
-      It is not unconditional.
+S3 Condition for generational convergence  [corrected]
+   competence channel converges iff lambda > rho(1-2e);
+   diversity channel converges iff exogenous eta > kappa(1-e) (lambda never).
 """
 import json
 import sys
@@ -84,15 +81,17 @@ OUT["S2_coin"] = dict(R_dim_bit=round(float(R_DIM), 3),
                       lossless_part="the binary fact that a signer chose = e")
 
 # ---------------------------------------------------------------- S3 generational convergence
-lams = np.linspace(0.01, 0.40, 200)
-t_half = sim.t_half(sim.KAPPA, 0.21)
-R_curve = (1 / lams) / t_half
-lam_star = 1 / t_half
+e_ref = 0.21
+lam_c = sim.RHO * (1 - 2 * e_ref)
 OUT["S3_generational"] = dict(
-    t_half=round(t_half, 2), lam_star=round(lam_star, 4),
-    R_at_current_lambda=round((1 / sim.LAM) / t_half, 3),
-    R_at_lambda_015=round((1 / 0.15) / t_half, 3),
-    verdict="the competence channel always recovers via turnover; sigma converges only for lambda>lambda*")
+    comp_channel=dict(convergence_condition=f"lambda > rho(1-2e) = {lam_c:.4f}",
+                      convergent_at_defaults=bool(sim.LAM > lam_c)),
+    sigma_channel=dict(damage_rate=round(float(-np.log(1 - sim.KAPPA * (1 - e_ref))), 5),
+                       repair_rate_exogenous=sim.SIGMA_REFRESH,
+                       convergent_at_eta0=False,
+                       note="lambda does NOT repair sigma; only exogenous fresh data (eta) does"),
+    withdrawn=("the earlier R=(1/lambda)/t_half and lambda*=1/t_half mixed timescales "
+               "and mis-attributed sigma-repair to lambda (review pts 1,2,3)"))
 
 # ================================================================= figures
 fig, ax = plt.subplots(1, 3, figsize=(16.5, 5.4))
@@ -149,32 +148,34 @@ a.set_title("(2) The coin of choice: 1 bit vs H(T)=1.5k bits\nWhat survives is n
 a.legend(fontsize=8, loc="upper right", facecolor="#1b2130",
          edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (3) generational convergence
+# (3) generational convergence [corrected]: comp-channel condition / sigma exogenous
 a = ax[2]
-a.plot(lams, R_curve, color=C["blue"], lw=2.6)
-a.axhline(1, color=C["grey"], lw=1.4, ls=":")
-a.axvline(lam_star, color=C["amber"], lw=2, ls="--")
-a.fill_between(lams, 0, 1, where=(R_curve < 1), color=C["cyan"], alpha=0.16)
-a.fill_between(lams, 1, 4, where=(R_curve > 1), color=C["red"], alpha=0.14)
-a.text(lam_star + 0.008, 3.4, f"λ* = {lam_star:.3f}", color=C["amber"],
-       fontsize=9.5, fontweight="bold")
-a.text(0.30, 0.55, "convergent\ngenerationally", color=C["cyan"],
-       fontsize=9, ha="center", fontweight="bold")
-a.text(0.055, 2.6, "divergent even\ngenerationally", color=C["red"],
-       fontsize=9, ha="center", fontweight="bold")
-a.plot([sim.LAM], [(1 / sim.LAM) / t_half], "o", color=C["red"], ms=10,
+lam_grid = np.linspace(0.0, 0.40, 200)
+e_ref = 0.21
+a.plot(lam_grid, lam_grid + sim.RHO * e_ref, color=C["cyan"], lw=2.6,
+       label="comp repair = lambda + rho*e")
+a.plot(lam_grid, np.full_like(lam_grid, sim.RHO * (1 - e_ref)), color=C["red"],
+       lw=2.6, label="comp damage = rho*(1-e)")
+lam_c = sim.RHO * (1 - 2 * e_ref)
+a.axvline(lam_c, color=C["amber"], lw=2, ls="--")
+a.text(lam_c + 0.006, 0.30, f"lambda_c = rho(1-2e) = {lam_c:.3f}",
+       color=C["amber"], fontsize=9, fontweight="bold")
+a.fill_between(lam_grid, 0, 0.42, where=(lam_grid > lam_c), color=C["cyan"], alpha=0.12)
+a.plot([sim.LAM], [sim.LAM + sim.RHO * e_ref], "o", color=C["cyan"], ms=10,
        mec="#0f1117", mew=1.6)
-a.annotate("now\nλ=0.067, R=1.74", xy=(sim.LAM, (1 / sim.LAM) / t_half),
-           xytext=(0.10, 2.0), color=C["red"], fontsize=8.5, fontweight="bold",
-           arrowprops=dict(arrowstyle="->", color=C["red"], lw=1.5))
-a.plot([0.15], [(1 / 0.15) / t_half], "o", color=C["cyan"], ms=10,
-       mec="#0f1117", mew=1.6)
-a.annotate("λ=0.15 → R=0.78", xy=(0.15, (1 / 0.15) / t_half),
-           xytext=(0.185, 0.9), color=C["cyan"], fontsize=8.5, fontweight="bold",
+a.annotate("now lambda=0.067:\ncomp channel converges",
+           xy=(sim.LAM, sim.LAM + sim.RHO * e_ref), xytext=(0.17, 0.15),
+           color=C["cyan"], fontsize=8.5, fontweight="bold",
            arrowprops=dict(arrowstyle="->", color=C["cyan"], lw=1.5))
-a.set_xlabel("generational turnover rate  λ"); a.set_ylabel("R = t_repair / t_damage")
-a.set_ylim(0, 4); a.set_xlim(0.01, 0.40)
-a.set_title("(3) 'Generationally it converges' is conditional:\ntrue only for λ > λ*; the competence channel, always")
+a.text(0.015, 0.40, "sigma channel: repair = eta (exogenous) = 0 < damage 0.040\n"
+                    "-> diversity needs fresh external data, NOT lifespan",
+       color=C["red"], fontsize=8.5, va="top")
+a.set_xlabel("generational turnover rate  lambda"); a.set_ylabel("per-generation rate")
+a.set_ylim(0, 0.42); a.set_xlim(0, 0.40)
+a.set_title("(3) CORRECTED convergence: competence converges for\n"
+            "lambda>rho(1-2e); diversity only via exogenous eta")
+a.legend(fontsize=8, loc="lower right", facecolor="#1b2130",
+         edgecolor="#39415a", labelcolor="#c9d1e0")
 
 fig.suptitle("MEAT PROXY — the scale axis: signature, the coin of choice, generational convergence",
              color="#eef2fb", fontsize=14.5, fontweight="bold", y=0.995)

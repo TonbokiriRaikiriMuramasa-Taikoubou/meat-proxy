@@ -101,33 +101,33 @@
   "P3_t_half": [
     {
       "kappa": 0.005,
-      "e_bar_0": 69.14,
-      "e_bar_040": 115.35,
-      "e_bar_080": 346.4
+      "e_bar_0": 138.28,
+      "e_bar_040": 230.7,
+      "e_bar_080": 692.8
     },
     {
       "kappa": 0.01,
-      "e_bar_0": 34.48,
-      "e_bar_040": 57.59,
-      "e_bar_080": 173.11
+      "e_bar_0": 68.97,
+      "e_bar_040": 115.18,
+      "e_bar_080": 346.23
     },
     {
       "kappa": 0.02,
-      "e_bar_0": 17.15,
-      "e_bar_040": 28.71,
-      "e_bar_080": 86.47
+      "e_bar_0": 34.31,
+      "e_bar_040": 57.41,
+      "e_bar_080": 172.94
     },
     {
       "kappa": 0.05,
-      "e_bar_0": 6.76,
-      "e_bar_040": 11.38,
-      "e_bar_080": 34.48
+      "e_bar_0": 13.51,
+      "e_bar_040": 22.76,
+      "e_bar_080": 68.97
     },
     {
       "kappa": 0.1,
-      "e_bar_0": 3.29,
-      "e_bar_040": 5.6,
-      "e_bar_080": 17.15
+      "e_bar_0": 6.58,
+      "e_bar_040": 11.2,
+      "e_bar_080": 34.31
     }
   ],
   "sim_A_no_audit": {
@@ -1579,16 +1579,16 @@
   },
   "P5_note": "The only discriminating channel is latency L; since L is what society optimises away, the system destroys its own only diagnostic.",
   "timescales": {
-    "t_damage_half_gen": 8.6,
+    "t_damage_half_gen": 17.2,
     "t_repair_gen": 14.93,
-    "R_repair_over_damage": 1.736,
-    "lambda_star_for_R1": 0.1163,
+    "R_repair_over_damage": 0.868,
+    "lambda_star_for_R1": 0.0581,
     "tau_learning_timeconstant": {
       "0.02": 1250.0,
       "0.05": 500.0,
       "0.1": 250.0,
       "0.55": 45.5
     },
-    "verdict": "R>1: damage outruns repair; lifespan delays collapse, it does not prevent it."
+    "verdict": "R<=1: repair keeps up with damage"
   }
 }

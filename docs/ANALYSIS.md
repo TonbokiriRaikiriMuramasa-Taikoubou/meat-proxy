@@ -121,19 +121,27 @@ damage, repair, learning.
 
 | Channel | Timescale | Value (generations) |
 |---|---|---|
-| damage (diversity half-life) | `ln0.5 / (2 ln(1−κ(1-e)))` | **8.6** |
-| repair (meat turnover `1/λ`) | `1/λ` | **14.9** |
-| learning (update of weight `tau`, `q=0.05`) | `1/(2·DTAU·q)` | **500** |
+| σ damage (self-ingestion) | `−ln(1−κ(1−e))` | **0.040** /gen |
+| σ repair | exogenous refresh `η` only (**`λ` does NOT repair σ**) | **0** (at η=0) |
+| comp damage (atrophy) | `ρ(1−e)` | **0.047** /gen |
+| comp repair (use + turnover) | `λ+ρe` | **0.080** /gen |
+| τ learning | `2·DTAU·q` | **0.002** /gen |
+| (ref) half-life equivalents σ-dmg / comp-repair / τ-learn | `ln2/rate` | 17.2 / 8.7 / 346 gen |
 | (ref) a human career | — | ≈30 |
 
 ```
-R = t_repair / t_damage = 14.9 / 8.6 = 1.74  > 1
-lambda* (turnover rate giving R=1) = 0.116   <- actual is 0.067, so we miss it
+WITHDRAWN: the first revision's R = t_repair/t_damage = 1.74 and lambda*=0.116 are
+retracted. (a) They mixed a VARIANCE half-life (factor 2) with a MEAN waiting time
+1/lambda; (b) they mis-attributed sigma-repair to lambda. The correct statement is
+the per-channel rate table above: sigma has no endogenous repair (non-convergent at
+eta=0); comp converges for lambda > rho(1-2e)=0.035 (satisfied at 0.067).
+See docs/ADDENDUM.md points 1-3.
 ```
 
-- **Damage runs 1.74× faster than repair.** The system is not "stable"; it is
-  *damaging faster than it can repair, while looking stable because turnover keeps
-  resetting it*.
+- **σ is not repaired endogenously.** Self-ingestion 0.040/gen against repair 0
+  (exogenous only). Diversity therefore collapses to the floor unless fresh external
+  data η arrives, independent of lifespan. comp, by contrast, converges
+  (repair 0.080 > damage 0.047); only comp is sustained by lifespan (turnover).
 - **Learning of the weight takes 500 generations.** Within a 30-generation career
   `tau` moves ≈0.02. The weight is effectively **frozen on a human timescale** (§6).
 - Diversity collapse can be judged by an upper bound on `κ`: not halving within a
@@ -150,13 +158,13 @@ institutionalised), `comp→0`, `c_eff→2.2·c0`, and **even raising audit to `
 yields verification of only 0.153** (fresh meat: 0.512; ratio 3.35×). Lifespan
 guarantees the *existence* of repair.
 
-**The wrong half.** Lifespan fixes the *speed* of repair at `1/λ ≈ 15` generations,
-while damage runs at 8.6. Since `R=1.74>1`, **lifespan does not prevent collapse; it
-merely prevents collapse from being observed inside one lifespan.** Unobserved
-collapse is not the same as no collapse. Moreover lifespan only works *while meat is
-present*: the moment the role is automated and `λ→0`, the repair channel vanishes and
-the absorbing state surfaces. **Lifespan's protection is conditional on meat
-continuing to exist.**
+**The wrong half (corrected).** Lifespan (turnover λ) repairs **competence (comp)
+only**, not diversity (σ). No amount of λ stops σ-collapse (demonstrated:
+`rigor.lambda_does_not_repair_sigma` — σ-terminal = 0.005 for λ=0 / 0.067 / 0.3);
+only exogenous data η stops it. The correct statement is therefore: **lifespan
+guards against the atrophy of competence (the absorbing state), but not against the
+collapse of diversity.** Lifespan's protection of competence is conditional on meat
+continuing to exist: automate the role (λ→0) and the absorbing state surfaces.
 
 ---
 
@@ -232,8 +240,10 @@ The bootstrap must come from outside.**
    absorbing state**; the term's self-contradiction appears exactly as the stability
    of `e*=0`.
 2. The meat's informational value-add is 0 (ΔE|err| = 0.0002); social utility negative.
-3. The breaking point is not one threshold but the ordering **damage 8.6 / repair 14.9
-   / learning 500 (generations)**; `R=1.74>1` makes repair structurally slow.
+3. The breaking point is not one threshold but the ordering of **per-channel
+   rates**: σ has zero endogenous repair (non-convergent), comp converges, and τ
+   learning (0.002) is the slowest channel. The first revision's `R=1.74` is
+   withdrawn (docs/ADDENDUM.md).
 4. "It does not break as long as there is lifespan" is right that lifespan guarantees
    the *existence* of repair, wrong that repair's *speed* beats damage. Lifespan hides
    collapse; it does not prevent it.
@@ -287,16 +297,18 @@ the accountability channel — indeed the coin's entire content is accountabilit
 
 ## S3. Generational convergence is conditional
 
-`R = (1/λ)/t_half`, `t_half=8.6`. Convergence holds only for `λ > λ* = 0.116`.
+The competence channel converges iff `λ > ρ(1−2e) = 0.035`. The diversity channel is
+non-convergent in λ regardless (repair = exogenous η=0 < damage 0.040).
 
 ```
-lambda=0.067 (now) -> R=1.74  divergent side
-lambda=0.15        -> R=0.78  convergent side
+comp : lambda=0.067 > 0.035   convergent
+sigma: eta=0        < 0.040   non-convergent (lifespan cannot save it)
 ```
 
 - **Competence (comp) channel:** turnover always resets `comp=1`, so it converges
   generationally unconditionally.
-- **Diversity (σ) channel:** converges only for `λ>λ*`; currently not satisfied.
+- **Diversity (σ) channel:** does **not** converge via λ; converges only for
+  exogenous `η > κ(1−e)`.
 
 So "individually they collide, generationally they converge" is a theorem for
 competence and a **conditional theorem** for diversity.

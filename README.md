@@ -7,7 +7,7 @@ what its weights are, and over what range a signature retains force.**
 This is the English companion of the Japanese repository. The code, figures and
 numerical results are **identical** (verified: all numerics in `results/*.json`
 match the JA repo bit-for-bit; only human-readable verdict strings are translated).
-The full derivation lives in [`docs/ANALYSIS.md`](docs/ANALYSIS.md).
+The full derivation lives in [`docs/ANALYSIS.md`](docs/ANALYSIS.md); the response to the 12-point scientific-completeness review, including all withdrawals, is in [`docs/ADDENDUM.md`](docs/ADDENDUM.md).
 
 > **On term-values.** Translating a coinage forces choices about what each word is
 > worth in the target language. The choices made here are listed openly in
@@ -23,12 +23,14 @@ The full derivation lives in [`docs/ANALYSIS.md`](docs/ANALYSIS.md).
 |---|---|---|
 | 1 | Informational value of the meat (vs. asking the model directly) | `ΔE\|err\| = 0.0002` (= 0; adds latency only) |
 | 2 | `e*=0` is an absorbing state (hysteresis ratio) | at the same audit `q=0.98`: atrophied 0.153 vs fresh 0.512 (**3.35×**) |
-| 3 | Three timescales — damage / repair / learning (generations) | **8.6 / 14.9 / 500** → `R = 1.74 > 1` (repair cannot keep up) |
+| 3 | Per-channel rates (/gen) σ-dmg / σ-repair / comp-dmg / comp-repair / τ-learn | **0.040 / 0 (exogenous only) / 0.047 / 0.080 / 0.002** → σ has no endogenous repair; comp converges; τ slowest |
 | 4 | Impossibility of internal reform (mutual-audit critical point) | `β_crit = 1.49 > 1` (physical max is 1) → no interior tipping point |
 | 5 | Misallocated credence (Regime I, `q_ext=0.05`) | `w_opt ≈ -0.02` vs `w_act ≈ 0.95` → `gap ≈ 0.65–0.97`, frozen |
 | 6 | Range of a signature's force (Dunbar horizon) | inside `gap=0.40` → outside `gap=0.97` (outside = meat-proxy by structure) |
 | 7 | Share of a trace the coin of choice (1 bit) can carry | at `k=6`: **11%** (89% shaved; what survives losslessly is the fact-of-choice = `e`) |
-| 8 | Condition for generational convergence | only for `λ > λ* = 0.116` (now `λ=0.067`, `R=1.74`, divergent side) |
+| 8 | Condition for generational convergence | comp: `λ > ρ(1−2e)=0.035` (satisfied at 0.067). σ: needs `η > κ(1−e)=0.040` (λ is powerless) |
+| 9 | `I(e;a｜fluency)` measured | **0.0001 bit** (ex-ante `I(e;a)=0.022`; ex-post `I(e;a｜θ)=0.734`) |
+| 10 | `w_opt` derived from MMSE + covariance | **exactly 0** at `e=0` (the relayed answer is strictly worse than a direct query) |
 
 ---
 
@@ -39,6 +41,11 @@ The full derivation lives in [`docs/ANALYSIS.md`](docs/ANALYSIS.md).
 
 ### Scale axis — range of a signature · the coin of choice · generational convergence
 ![scale axis](figures/fig_scale_axis.png)
+
+### Corrected axis — one-scale rates · λ↛σ demonstrated · 2-D fixed point · MMSE weight · measured MI · utility pricing diversity
+![rigor](figures/fig_rigor.png)
+
+> **The rate-distortion part of the coin of choice (S2) is a metaphorical application** (point 11): the trace is not literally a Gaussian source and the 1-bit coin is conceptual.
 
 ---
 
@@ -65,14 +72,20 @@ Outputs: `figures/*.png`, `results/*.json`
 ├── src/
 │   ├── model.py               <- the dynamical system (population, endogenous audit, fixed points)
 │   ├── figure_time.py         <- time-axis aggregation and the 6-panel figure
-│   └── figure_scale.py        <- scale-axis aggregation and the 3-panel figure
+│   ├── figure_scale.py        <- scale-axis aggregation and the 3-panel figure
+│   └── rigor.py               <- scientific-completeness layer (corrections, MI, MMSE, sensitivity, multiseed)
 ├── figures/
 │   ├── fig_time_axis.png
-│   └── fig_scale_axis.png
+│   ├── fig_scale_axis.png
+│   └── fig_rigor.png
 ├── results/
 │   ├── sim_raw.json           <- raw trajectories
 │   ├── summary_time.json      <- time-axis aggregates
-│   └── summary_scale.json     <- scale-axis aggregates
+│   ├── summary_scale.json     <- scale-axis aggregates
+│   └── rigor.json             <- corrected-analysis aggregates
+├── tests/
+│   └── test_rigor.py          <- 12 invariant tests (pytest)
+├── .github/workflows/ci.yml   <- CI (py3.11/3.12, pytest + figure regeneration)
 ├── Makefile
 ├── requirements.txt
 └── LICENSE

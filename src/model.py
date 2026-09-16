@@ -33,9 +33,9 @@ Agents: M (model) / P_i (proxy = meat, i=1..N) / S (society = recipient)
   P2  The population mean verification rate e_bar is sustained only by the
       supply of fresh meat:  e_bar ~ LAM / (LAM + atrophy-driven dropout).
       The meat equilibrium is borrowed from lifespan; it is not a solution.
-  P3  Diversity half-life  t_half = ln0.5 / (2 ln(1 - KAPPA(1-e_bar))).
-      Not breaking within a career of L generations requires
-      KAPPA(1-e_bar) < 1 - 0.5^(1/(2L)).
+  P3  Diversity half-life (of the std) t_half = ln0.5 / ln(1 - KAPPA(1-e_bar));
+      sigma is repaired ONLY by exogenous refresh eta, never by turnover lambda.
+      See src/rigor.py channel_rates (review pts 1-3).
   P4  The audit sees the error but not its source; the penalty's addressee is
       always the human.
   P5  I(e ; a | fluency) ~ 0. The only observable leaking e is latency L, and
@@ -65,6 +65,7 @@ PHI     = 1.00    # audit penalty
 KAPPA   = 0.05    # self-ingestion rate of unverified output
 LAM     = 0.067   # generational turnover rate (~15 yr)
 SIG_MIN = 0.005
+SIGMA_REFRESH = 0.0   # exogenous fresh-data refresh rate eta. lambda does NOT repair sigma.
 SIG0    = 1.0
 L0, DL  = 1.0, 4.0
 FLUENCY = 0.95    # fluency (high regardless of verification)
@@ -79,8 +80,19 @@ def q_critical(c0=B * 0 + 0.30, phi=PHI, b=B):
 
 
 def t_half(kappa=KAPPA, e_bar=0.0):
+    """Half-life of the std sigma -- the quantity actually plotted as 'diversity'.
+
+    sigma <- sigma*(1-kappa(1-e)) once per generation, so the half-life of sigma is
+    ln0.5/ln(1-kappa(1-e)).  (An earlier revision wrongly used the VARIANCE
+    half-life ln0.5/(2 ln(...)) here while plotting sigma; see docs/ANALYSIS.md
+    addendum point 1.)"""
     s = 1.0 - kappa * (1.0 - e_bar)
-    return float("inf") if s >= 1 else float(np.log(0.5) / (2 * np.log(s)))
+    return float("inf") if s >= 1 else float(np.log(0.5) / np.log(s))
+
+
+def t_half_var(kappa=KAPPA, e_bar=0.0):
+    """Half-life of the variance sigma^2 (= t_half/2). Kept for transparency only."""
+    return t_half(kappa, e_bar) / 2.0
 
 
 def kappa_ceiling(L_gen, e_bar=0.0):
@@ -143,8 +155,10 @@ def run(q, T=400, lam=LAM, kappa=KAPPA, latency_selection=0.0,
             if hetero:
                 c0[repl] = rng.uniform(C0_LO, C0_HI, int(repl.sum()))
 
-        # 8. diversity collapse
-        sigma = max(sigma * (1 - kappa * (1 - e_bar)), SIG_MIN)
+        # 8. diversity collapse (damage) + exogenous refresh (repair); turnover lam does NOT repair sigma.
+        sigma = sigma * (1 - kappa * (1 - e_bar))
+        sigma = sigma + SIGMA_REFRESH * (SIG0 - sigma)
+        sigma = max(sigma, SIG_MIN)
 
         # 6'. weights
         var_M = sigma ** 2 + B ** 2
@@ -279,7 +293,13 @@ if __name__ == "__main__":
 #      if BETA_crit > 1, mutual audit alone cannot reach the high-verification equilibrium.
 # ==================================================================
 def F(q):
-    return np.clip((np.asarray(q, float) * PHI * B - C0_LO) / (C0_HI - C0_LO), 0.0, 1.0)
+    """Verifying share among FRESH meat (comp=1) -- a static approximation.
+
+    q is a probability and is clipped to [0,1] here so the fixed-point analysis
+    (where q_ext + beta*e can algebraically exceed 1) stays in the simplex.
+    For atrophied meat use rigor.F_atrophied / rigor.fixed_point_2d (point 5,6)."""
+    q = np.clip(np.asarray(q, float), 0.0, 1.0)
+    return np.clip((q * PHI * B - C0_LO) / (C0_HI - C0_LO), 0.0, 1.0)
 
 
 def beta_crit():
@@ -325,7 +345,9 @@ def run_endogenous(q_ext, beta, T=400, **kw):
         if repl.any():
             comp[repl] = 1.0
             c0[repl] = rng.uniform(C0_LO, C0_HI, int(repl.sum()))
-        sigma = max(sigma * (1 - kw.get("kappa", KAPPA) * (1 - e_bar)), SIG_MIN)
+        sigma = sigma * (1 - kw.get("kappa", KAPPA) * (1 - e_bar))
+        sigma = sigma + kw.get("eta", SIGMA_REFRESH) * (SIG0 - sigma)
+        sigma = max(sigma, SIG_MIN)
         var_M = sigma ** 2 + B ** 2
         var_P = float(np.mean((1 - e) ** 2 * var_M + DELTA_R ** 2
                               + e ** 2 * (ETA / np.maximum(comp, 1e-6)) ** 2))
