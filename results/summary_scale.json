@@ -1,0 +1,75 @@
+{
+  "S1_dunbar": [
+    {
+      "layer": "5\nsupport",
+      "n": 5,
+      "q": 0.8,
+      "e_bar": 0.385,
+      "w_opt": 0.553,
+      "w_act": 0.95,
+      "gap": 0.397
+    },
+    {
+      "layer": "15\nsympathy",
+      "n": 15,
+      "q": 0.5,
+      "e_bar": 0.183,
+      "w_opt": 0.301,
+      "w_act": 0.95,
+      "gap": 0.649
+    },
+    {
+      "layer": "50\naffinity",
+      "n": 50,
+      "q": 0.25,
+      "e_bar": 0.014,
+      "w_opt": 0.008,
+      "w_act": 0.95,
+      "gap": 0.942
+    },
+    {
+      "layer": "150\nDunbar",
+      "n": 150,
+      "q": 0.1,
+      "e_bar": 0.0,
+      "w_opt": -0.02,
+      "w_act": 0.95,
+      "gap": 0.97
+    },
+    {
+      "layer": "beyond\nstrangers",
+      "n": 1500,
+      "q": 0.05,
+      "e_bar": 0.0,
+      "w_opt": -0.02,
+      "w_act": 0.95,
+      "gap": 0.97
+    }
+  ],
+  "S2_coin": {
+    "R_dim_bit": 1.5,
+    "retained_at_k6": 0.1111,
+    "curve": {
+      "1": 0.6667,
+      "2": 0.3333,
+      "3": 0.2222,
+      "4": 0.1667,
+      "5": 0.1333,
+      "6": 0.1111,
+      "7": 0.0952,
+      "8": 0.0833,
+      "9": 0.0741,
+      "10": 0.0667,
+      "11": 0.0606,
+      "12": 0.0556
+    },
+    "lossless_part": "the binary fact that a signer chose = e"
+  },
+  "S3_generational": {
+    "t_half": 8.6,
+    "lam_star": 0.1163,
+    "R_at_current_lambda": 1.736,
+    "R_at_lambda_015": 0.775,
+    "verdict": "comp チャネルは常に交代で回復するが、σ チャネルは λ>λ* でのみ収束"
+  }
+}

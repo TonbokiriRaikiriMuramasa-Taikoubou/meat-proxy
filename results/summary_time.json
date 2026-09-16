@@ -1,0 +1,316 @@
+{
+  "equivalence": {
+    "err_direct": 0.35,
+    "err_via_meat_proxy": 0.3503,
+    "delta": 0.0002,
+    "latency_added": 1.0,
+    "verdict": "精度差は中継ノイズ分だけ。肉の付加価値は 0、遅延は L0>0"
+  },
+  "beta_crit": 1.4857,
+  "F_prime": 0.6731,
+  "phase": [
+    {
+      "q_ext": 0.0,
+      "beta": 0.0,
+      "fp": [
+        0.0
+      ],
+      "stable": [
+        false
+      ]
+    },
+    {
+      "q_ext": 0.0,
+      "beta": 1.0,
+      "fp": [
+        0.0
+      ],
+      "stable": [
+        false
+      ]
+    },
+    {
+      "q_ext": 0.0,
+      "beta": 1.4857,
+      "fp": [
+        0.0
+      ],
+      "stable": [
+        false
+      ]
+    },
+    {
+      "q_ext": 0.1,
+      "beta": 0.0,
+      "fp": [
+        0.0
+      ],
+      "stable": [
+        false
+      ]
+    },
+    {
+      "q_ext": 0.1,
+      "beta": 1.0,
+      "fp": [
+        0.0
+      ],
+      "stable": [
+        false
+      ]
+    },
+    {
+      "q_ext": 0.1,
+      "beta": 1.4857,
+      "fp": [
+        0.0
+      ],
+      "stable": [
+        false
+      ]
+    },
+    {
+      "q_ext": 0.229,
+      "beta": 0.0,
+      "fp": [
+        0.0003
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.229,
+      "beta": 1.0,
+      "fp": [
+        0.0008
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.229,
+      "beta": 1.4857,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.3,
+      "beta": 0.0,
+      "fp": [
+        0.048
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.3,
+      "beta": 1.0,
+      "fp": [
+        0.147
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.3,
+      "beta": 1.4857,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.4,
+      "beta": 0.0,
+      "fp": [
+        0.1153
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.4,
+      "beta": 1.0,
+      "fp": [
+        0.3528
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.4,
+      "beta": 1.4857,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.5,
+      "beta": 0.0,
+      "fp": [
+        0.1825
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.5,
+      "beta": 1.0,
+      "fp": [
+        0.5586
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.5,
+      "beta": 1.4857,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.6,
+      "beta": 0.0,
+      "fp": [
+        0.2498
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.6,
+      "beta": 1.0,
+      "fp": [
+        0.7647
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.6,
+      "beta": 1.4857,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.86,
+      "beta": 0.0,
+      "fp": [
+        0.4249
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.86,
+      "beta": 1.0,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    },
+    {
+      "q_ext": 0.86,
+      "beta": 1.4857,
+      "fp": [
+        0.9997
+      ],
+      "stable": [
+        true
+      ]
+    }
+  ],
+  "regimes": [
+    {
+      "regime": "I   q_ext < q_boot",
+      "q_ext": 0.05,
+      "q": 0.05,
+      "e_bar": 0.0,
+      "err": 0.3499,
+      "tau": 0.6649,
+      "w_P_opt": -0.0204,
+      "w_P_act": 0.6316,
+      "gap": 0.652,
+      "sigma": 0.005
+    },
+    {
+      "regime": "II  dead zone",
+      "q_ext": 0.3,
+      "q": 0.4302,
+      "e_bar": 0.1303,
+      "err": 0.3259,
+      "tau": 0.0,
+      "w_P_opt": 0.0673,
+      "w_P_act": 0.0,
+      "gap": -0.0673,
+      "sigma": 0.005
+    },
+    {
+      "regime": "III near-total audit",
+      "q_ext": 0.9,
+      "q": 1.0,
+      "e_bar": 0.5191,
+      "err": 0.2537,
+      "tau": 1.0,
+      "w_P_opt": 0.3293,
+      "w_P_act": 0.95,
+      "gap": 0.6207,
+      "sigma": 0.005
+    }
+  ],
+  "timescales": {
+    "t_damage_half_gen": 8.6,
+    "t_repair_gen": 14.93,
+    "R_ratio": 1.736,
+    "lambda_star": 0.1163,
+    "tau_timeconst": {
+      "0.02": 1250.0,
+      "0.05": 500.0,
+      "0.1": 250.0,
+      "0.55": 45.5
+    },
+    "human_career_gen": 30
+  },
+  "kappa_ceiling": {
+    "L=10gen": 0.03406,
+    "L=20gen": 0.01718,
+    "L=30gen": 0.01149,
+    "L=40gen": 0.00863
+  },
+  "hysteresis": {
+    "c_eff_multiplier_at_full_atrophy": 2.2,
+    "e_bar_atrophied_at_q098": 0.153,
+    "e_bar_fresh_at_q098": 0.5123,
+    "ratio": 3.35
+  }
+}
