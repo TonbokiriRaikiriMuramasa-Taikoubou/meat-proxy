@@ -1,76 +1,71 @@
-# Addendum: responses to the scientific-completeness review (12 points)
+# 補遺: 科学的完成度への応答（査読12点）
 
-> A domain review flagged that several first-revision headline numbers mixed
-> timescales and mis-attributed repair. This addendum records the response to all
-> 12 points and every withdrawal / correction.
-> Implementation: `src/rigor.py`; figure: `figures/fig_rigor.png`; tests:
-> `tests/test_rigor.py`; CI: `.github/workflows/ci.yml`; numbers: `results/rigor.json`.
+> 領域査読により、初版のヘッドライン数値の一部が**時間尺度の混在**と**修復の誤帰属**を
+> 含んでいたことが指摘された。本補遺は12点すべてへの対応と、撤回・訂正の記録である。
+> 実装は `src/rigor.py`、図は `figures/fig_rigor.png`、テストは `tests/test_rigor.py`、
+> CI は `.github/workflows/ci.yml`。数値は `results/rigor.json`。
 
 ---
 
-## Withdrawals (most important)
+## 撤回事項（最重要）
 
-**The first revision's `R = t_repair / t_damage = 1.74 > 1` ("damage outruns repair")
-and `λ* = 0.116` are WITHDRAWN.** Two reasons, both as the review stated:
+**初版の `R = t_repair / t_damage = 1.74 > 1`（「損傷が修復より速い」）および
+`λ* = 0.116` は撤回する。** 理由は二つ、どちらも査読の指摘通り：
 
-1. **Mixed scales (points 1,2).** The numerator `t_damage` was the *variance*
-   half-life `ln0.5/(2ln(1−κ(1−e)))=8.6` (the factor 2 comes from squaring), while the
-   denominator `t_repair=1/λ` was a *mean waiting time*. A half-life and a mean
-   waiting time are different quantiles and cannot be compared. Moreover the figure
-   plotted σ (the std) as "diversity", so the correct σ half-life is
-   `ln0.5/ln(1−κ(1−e))=17.2`.
-2. **Mis-attributed repair (point 3).** Turnover `λ` repairs **comp (competence)**
-   only, **not σ (diversity)**. σ is repaired only by exogenous data `η`.
-   Demonstrated: `rigor.lambda_does_not_repair_sigma` — σ-terminal = 0.005 for
-   λ=0 / 0.067 / 0.3 (invariant), while comp-terminal = 0.00 / 0.55 / 0.88.
+1. **尺度の混在（点1・2）。** 分子 `t_damage` は*分散*の半減期 `ln0.5/(2ln(1−κ(1−e)))=8.6`
+   （係数2は分散由来）だった一方、分母 `t_repair=1/λ` は*平均待ち時間*だった。
+   半減期と平均待ち時間は別の分位点であり比較できない。さらに図では σ（標準偏差）を
+   「多様性」としてプロットしていたため、半減期は σ 基準で `ln0.5/ln(1−κ(1−e))=17.2` が正。
+2. **修復の誤帰属（点3）。** `λ`（世代交代）が修復するのは **comp（検証能力）** だけで、
+   **σ（多様性）ではない**。σ を修復するのは外生データ `η` のみ。
+   実証: `rigor.lambda_does_not_repair_sigma` — λ=0 / 0.067 / 0.3 の全てで σ 終端 = 0.005（不変）、
+   comp 終端のみ 0.00 / 0.55 / 0.88 と変化。
 
-**Corrected statement (per-channel rates, one common scale, point 2):**
+**訂正後の正しい叙述（チャネル別レート、同一尺度、点2）:**
 
-| Channel | damage /gen | repair /gen | convergence condition | at defaults |
+| チャネル | 損傷 /世代 | 修復 /世代 | 収束条件 | 既定値での判定 |
 |---|---|---|---|---|
-| σ (diversity) | 0.040 | **0** (exogenous η only) | `η > κ(1−e)` | **non-convergent** (η=0) |
-| comp (competence) | 0.047 | 0.080 (=λ+ρe) | `λ > ρ(1−2e)=0.035` | convergent (λ=0.067) |
-| τ (trust) | — | 0.002 (=2·DTAU·q) | ∝ q | extremely slow |
+| σ（多様性） | 0.040 | **0**（外生 η のみ） | `η > κ(1−e)` | **非収束**（η=0） |
+| comp（能力） | 0.047 | 0.080（=λ+ρe） | `λ > ρ(1−2e)=0.035` | 収束（λ=0.067） |
+| τ（信頼） | — | 0.002（=2·DTAU·q） | q に比例 | 極めて遅い |
 
-Hence "lifespan hides the collapse" is corrected to **"lifespan guards only the
-atrophy of competence (the absorbing state); it does not guard the collapse of
-diversity."** The only route that prevents diversity collapse is exogenous fresh
-data η.
+よって「寿命が破綻を隠す」は**「寿命は能力の萎縮（吸収状態）だけを妨げ、多様性の崩壊は妨げない」**
+に訂正される。多様性の崩壊を防ぐ唯一の経路は外生の新規データ η である。
 
 ---
 
-## Point-by-point
+## 12点への対応
 
-| # | Point | Response |
+| # | 指摘 | 対応 |
 |---|---|---|
-| 1 | half-life factor 2 | `model.t_half` now the std-σ half-life (17.2); the variance version kept explicitly as `t_half_var`. |
-| 2 | mixing mean-wait and half-life | all channels reported as per-generation log-rates (`rigor.channel_rates`); figures use one quantile (half-lives). |
-| 3 | model how λ repairs σ | σ repair modelled as exogenous `η` (`SIGMA_REFRESH`); λ↛σ demonstrated numerically (table, fig_rigor(2)). |
-| 4 | clip q in fixed-point analysis | `model.F` clips `q∈[0,1]`; test asserts fixed points stay in the unit square under absurd `q_ext,β`. |
-| 5 | F(q) is fresh-meat static approx | stated in docstring; atrophied variant `rigor.F_atrophied`, dynamic via `run/run_endogenous`. e.g. F(0.9): fresh 0.452 / atrophied 0.122. |
-| 6 | include comp and λ in fixed points | `rigor.fixed_point_2d` (joint (e,comp) fixed point with turnover). e.g. q=0.6: λ=0 → e*=0.051 (comp collapse), λ=0.067 → 0.256, λ=0.3 → 0.471. The 1-D F overstates. |
-| 7 | derive w_opt from MSE + covariance | `rigor.w_opt_mmse`: the MMSE weight when the recipient linearly combines the relayed answer a with their own direct query m, full covariance included. At e=0, **w_opt = 0 exactly** (a is strictly worse than m). |
-| 8 | compute I(e;a｜fluency) | `rigor.mi_trio` (histogram MI estimator). **I(e;fluency)=0.0001, I(e;a) ex-ante=0.022, I(e;a｜θ) ex-post=0.734 bits.** Ex-ante the information about e is ~0; it exists only ex-post. P5 is now measured, not asserted. |
-| 9 | utility where lost diversity is a loss | `rigor.utility` (`U = −[acc + ω·(−ln σ) + c_L·L]`). σ→floor regimes score U=−3.03, dominating any accuracy gain by an order of magnitude. |
-| 10 | state Dunbar q as assumption + sensitivity | `DUNBAR_Q_BASE` exposed as an assumption; `rigor.dunbar_sensitivity` (×0.5/×1/×2). **Beyond-horizon gap=0.97 is invariant across all scalings (robust); inside values are assumption-dependent** (support: 0.76/0.40/0.29). |
-| 11 | label rate-distortion as metaphorical | stated in prose and figure captions: the trace is not literally a Gaussian source and the 1-bit coin is conceptual; S2 is illustrative. |
-| 12 | multi-seed, CI, tests, sweeps | `rigor.multiseed` (24 seeds, 95% CI: gap=0.831±0.0004), `parameter_sweep` (κ, λ, q_ext), `tests/test_rigor.py` (12 invariant tests), `.github/workflows/ci.yml` (py3.11/3.12, pytest + figure regeneration). |
+| 1 | 半減期の係数2 | `model.t_half` を σ（標準偏差）基準に修正（17.2）。分散版は `t_half_var` として明示保持。 |
+| 2 | 平均待ち時間と半減期の混在 | 全チャネルを**世代あたり対数レート**に統一（`rigor.channel_rates`）。図も同一分位点（半減期）に統一。 |
+| 3 | λ が σ を修復するかの modelling | σ の修復は外生 `η`（`SIGMA_REFRESH`）として明示 model 化。λ↛σ を数値実証（上表・fig_rigor(2)）。 |
+| 4 | 固定点解析での q クリップ | `model.F` 内で `q∈[0,1]` にクリップ。異常 `q_ext,β` でも固定点が単位区間内であることをテスト。 |
+| 5 | F(q) が新品のみの静的近似 | docstring に明記。萎縮版 `rigor.F_atrophied`、動版は `run/run_endogenous`。例: F(0.9) 新品 0.452 / 萎縮 0.122。 |
+| 6 | 固定点に comp と λ を含める | `rigor.fixed_point_2d`（(e,comp) の結合不動点＋交代）。例: q=0.6 で λ=0 → e*=0.051（comp 崩壊）、λ=0.067 → 0.256、λ=0.3 → 0.471。1次元 F は過大評価。 |
+| 7 | w_opt を MSE・共分散から導出 | `rigor.w_opt_mmse`。受信者が中継答 a と自前の直接照会 m を線形結合するときの MMSE 重みを共分散込みで導出。e=0 で **w_opt=0 ちょうど**（a は m に厳密に劣る）。 |
+| 8 | I(e;a｜fluency) を実測 | `rigor.mi_trio`（ヒストグラム MI 推定）。**I(e;fluency)=0.0001、I(e;a)事前=0.022、I(e;a｜θ)事後=0.734 bit**。事前には e の情報はほぼ 0、事後にのみ存在——P5 を主張でなく測定にした。 |
+| 9 | 多様性減少を損失とする効用 | `rigor.utility`（`U = −[acc + ω·(−ln σ) + c_L·L]`）。σ→床の体制は U=−3.03 と、精度利得を一桁超えて支配。 |
+| 10 | Dunbar 層 q を仮定と明記＋感度 | `DUNBAR_Q_BASE` を仮定として明示し `rigor.dunbar_sensitivity`（×0.5/×1/×2）。**地平外の gap=0.97 は全スケーリングで不変（頑健）**、地平内は仮定依存（support: 0.76/0.40/0.29）。 |
+| 11 | rate-distortion は比喩と明記 | 本文・図キャプションに「比喩的応用」を明記（痕跡は厳密にはガウス源でない、1bit コインは概念的）。S2 は illustrative である旨を docs に追記。 |
+| 12 | 複数シード・CI・テスト・スイープ | `rigor.multiseed`（24シード, 95%CI: gap=0.831±0.0004）、`parameter_sweep`（κ,λ,q_ext）、`tests/test_rigor.py`（12不変テスト）、`.github/workflows/ci.yml`（py3.11/3.12, pytest + 図再生成）。 |
 
 ---
 
-## Conclusions that do NOT change
+## 訂正後も**変わらない**結論
 
-The withdrawals concern timescales and attribution, not the core:
+撤回は時間尺度と帰属に関するものであり、以下の核心は訂正後も数値的に不変：
 
-- The meat's informational value-add is 0 (`ΔE|err| = 0.0002`).
-- `e*=0` is an absorbing state (hysteresis 3.35×).
-- `β_crit = 1.49 > 1` → no incremental internal reform.
-- Misallocated credence `gap ≈ 0.65–0.97` frozen on a lifespan scale (τ learning 0.002/gen is the slowest channel).
-- Beyond the Dunbar horizon, meat-proxy by structure (gap=0.97, robust to sensitivity).
-- The answer is presented; the weight is hidden (I(e;fluency)≈0 now measured).
+- 肉の情報的付加価値 0（`ΔE|err| = 0.0002`）。
+- `e*=0` が吸収状態（ヒステリシス 3.35×）。
+- `β_crit = 1.49 > 1` → 内部からの漸進是正不能。
+- 重みの誤配 `gap ≈ 0.65–0.97` が生涯スケールで固定（τ 学習 0.002/世代 が最遅チャネル）。
+- 地平外では構造的にミートプロキシ（gap=0.97、感度分析で頑健）。
+- 答えは提示され、重みは隠される（I(e;fluency)≈0 を実測で確認）。
 
-## Conclusions that DO change
+## 訂正で**変わった**結論
 
-- "Damage outruns repair (R=1.74)" → **withdrawn**. Correctly: σ has zero endogenous repair (non-convergent); comp converges.
-- "Lifespan hides the collapse" → **"lifespan guards competence-atrophy only, not diversity-collapse."**
-- "Generational convergence iff λ>0.116" → **comp channel converges for λ>0.035 (satisfied now); σ channel never converges via λ and needs η.**
+- 「損傷が修復より速い（R=1.74）」→ **撤回**。正しくはチャネル別: σ は内因修復 0 で非収束、comp は収束。
+- 「寿命が破綻を隠す」→ **「寿命は能力の萎縮だけを妨げ、多様性の崩壊は妨げない」**。
+- 「世代収束の条件 λ>0.116」→ **comp チャネルは λ>0.035 で収束（現在は満足）**、σ チャネルは λ では決して収束せず η が必要。

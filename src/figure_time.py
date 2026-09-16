@@ -1,8 +1,5 @@
 """
-Final aggregation + figure generation (time axis)
-==================================================
-Companion to src/model.py. Produces figures/fig_time_axis.png and
-results/summary_time.json.
+最終集計 + 図の生成
 """
 import json
 import sys
@@ -24,23 +21,23 @@ plt.rcParams["axes.unicode_minus"] = False
 
 R = {}
 
-# ------------------------------------------------------------------ 1. equivalence
-# Is the meat-proxy system (e=0) equivalent to deleting the relay and asking directly?
+# ------------------------------------------------------------------ 1. 等価性
+# ミートプロキシ系(e=0) と 「中継を消して直接モデルに聞く」系は等価か
 rng = np.random.default_rng(3)
 T = 20000
 theta = rng.normal(0, 1, T)
 sigma = sim.SIG_MIN
 eps = rng.normal(0, sigma, T)
-direct = np.abs(theta + sim.B + eps - theta)                      # ask the model directly
-relay = np.abs(theta + sim.B + eps + rng.normal(0, sim.DELTA_R, T) - theta)  # via meat (e=0)
+direct = np.abs(theta + sim.B + eps - theta)                      # 直接モデルに聞く
+relay = np.abs(theta + sim.B + eps + rng.normal(0, sim.DELTA_R, T) - theta)  # 肉経由(e=0)
 R["equivalence"] = dict(
     err_direct=round(float(direct.mean()), 4),
     err_via_meat_proxy=round(float(relay.mean()), 4),
     delta=round(float(relay.mean() - direct.mean()), 4),
     latency_added=sim.L0,
-    verdict="the accuracy gap is just relay noise; meat adds 0 value and latency L0>0")
+    verdict="精度差は中継ノイズ分だけ。肉の付加価値は 0、遅延は L0>0")
 
-# ------------------------------------------------------------------ 2. phase structure
+# ------------------------------------------------------------------ 2. 位相構造
 R["beta_crit"] = round(sim.beta_crit(), 4)
 R["F_prime"] = round(float(sim.PHI * sim.B / (sim.C0_HI - sim.C0_LO)), 4)
 phase = []
@@ -51,7 +48,7 @@ for q_ext in (0.0, 0.10, 0.229, 0.30, 0.40, 0.50, 0.60, 0.86):
                           fp=fps, stable=[bool(s) for s in stab]))
 R["phase"] = phase
 
-# ------------------------------------------------------------------ 3. three regimes
+# ------------------------------------------------------------------ 3. 三体制
 regimes = []
 for name, q_ext, beta in [("I   q_ext < q_boot", 0.05, 1.0),
                           ("II  dead zone", 0.30, 1.0),
@@ -64,7 +61,7 @@ for name, q_ext, beta in [("I   q_ext < q_boot", 0.05, 1.0),
                         w_P_act=f("w_P_act"), gap=f("gap"), sigma=f("sigma")))
 R["regimes"] = regimes
 
-# ------------------------------------------------------------------ 4. timescales
+# ------------------------------------------------------------------ 4. 時定数
 _eb = 0.21
 _cr = RG.channel_rates(_eb)
 R["timescales"] = dict(
@@ -84,14 +81,14 @@ R["timescales"] = dict(
 R["kappa_ceiling"] = {f"L={L}gen": round(sim.kappa_ceiling(L, 0.0), 5)
                       for L in (10, 20, 30, 40)}
 
-# ------------------------------------------------------------------ 5. hysteresis
+# ------------------------------------------------------------------ 5. ヒステリシス
 R["hysteresis"] = dict(
     c_eff_multiplier_at_full_atrophy=round(1 + sim.GAMMA, 3),
     e_bar_atrophied_at_q098=0.153,
     e_bar_fresh_at_q098=0.5123,
     ratio=round(0.5123 / 0.153, 2))
 
-# ================================================================== figures
+# ================================================================== 図
 fig, ax = plt.subplots(2, 3, figsize=(16.5, 9.2))
 fig.patch.set_facecolor("#0f1117")
 for a in ax.ravel():
@@ -107,7 +104,7 @@ for a in ax.ravel():
 C = dict(red="#ff5f6d", cyan="#37d0c4", amber="#ffc46b",
          violet="#a78bfa", blue="#5b9dff", grey="#8b95ad")
 
-# (1) equivalence: meat-proxy system == relay deleted
+# (1) 等価性: ミートプロキシ系 == 中継を消した系
 a = ax[0, 0]
 rng0 = np.random.default_rng(5)
 M = 40000
@@ -128,7 +125,7 @@ a.set_title("(1) The meat proxy is informationally VOID\nΔE|err| = 0.0002; it a
 a.legend(fontsize=8, loc="upper right", facecolor="#1b2130",
          edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (2) e_bar vs q_ext (beta=0 and beta=1)
+# (2) e_bar vs q_ext (β=0 と β=1)
 a = ax[0, 1]
 qx = np.linspace(0, 1, 200)
 a.plot(qx, sim.F(qx), color=C["cyan"], lw=2.2, label="β = 0 (no mutual audit)")
@@ -146,7 +143,7 @@ a.set_title("(2) The bootstrap threshold\nNothing below q_ext = 0.229 ever verif
 a.legend(fontsize=8, loc="upper left", facecolor="#1b2130",
          edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (3) timescales: all as half-lives (same quantile) [corrected]
+# (3) 時定数: 全て半減期(同一quantile)に揃える [補正]
 a = ax[0, 2]
 hl = R["timescales"]["half_lives_gen"]
 labels = ["sigma damage\n(self-ingestion)", "sigma repair\n(exogenous, eta=0)",
@@ -166,7 +163,7 @@ a.set_xscale("log"); a.set_xlim(1, 2000)
 a.set_xlabel("half-life, generations (log) - same quantile for all channels")
 a.set_title("(3) CORRECTED: one quantile for all channels;\nsigma has no endogenous repair (R=1.74 withdrawn)")
 
-# (4) divergence of weights (Regime I trajectory)
+# (4) 重みの乖離 (体制 I の軌道)
 a = ax[1, 0]
 r = sim.run_endogenous(0.05, 1.0, T=600)
 t = [x["t"] for x in r]
@@ -184,7 +181,7 @@ a.set_title("(4) Regime I: w_act − w_opt stays ≈ 0.6–1.0\nτ moves only �
 a.legend(fontsize=7.8, loc="center right", facecolor="#1b2130",
          edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (5) collapse of sigma
+# (5) σ の崩壊
 a = ax[1, 1]
 for q_ext, col, lab in [(0.0, C["red"], "q_ext=0.00"),
                         (0.05, C["amber"], "q_ext=0.05"),
@@ -197,7 +194,7 @@ a.set_yscale("log"); a.set_xlabel("generation"); a.set_ylabel("σ (output divers
 a.set_title("(5) Diversity collapse: half-life 8.6 gen\nSaturates inside the first career")
 a.legend(fontsize=8, facecolor="#1b2130", edgecolor="#39415a", labelcolor="#c9d1e0")
 
-# (6) hysteresis
+# (6) ヒステリシス
 a = ax[1, 2]
 c0 = np.linspace(sim.C0_LO, sim.C0_HI, 300)
 a.plot(c0, c0, color=C["cyan"], lw=2.2, label="fresh (comp=1):  c_eff = c0")

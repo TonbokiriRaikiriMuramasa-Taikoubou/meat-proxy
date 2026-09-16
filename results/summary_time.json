@@ -4,7 +4,7 @@
     "err_via_meat_proxy": 0.3503,
     "delta": 0.0002,
     "latency_added": 1.0,
-    "verdict": "the accuracy gap is just relay noise; meat adds 0 value and latency L0>0"
+    "verdict": "精度差は中継ノイズ分だけ。肉の付加価値は 0、遅延は L0>0"
   },
   "beta_crit": 1.4857,
   "F_prime": 0.6731,
